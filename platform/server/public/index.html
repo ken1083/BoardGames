@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treasure Hunt Board</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #e5e5ea; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px;}
+        .panel { background: #ffffff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .hidden { display: none !important; }
+        h1, h2, h3 { margin-top: 0; color: #1d1d1f; }
+        
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .game-card { border: 2px solid #e5e5ea; padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .game-card.selected { border-color: #007aff; background: #e0efff; }
+        
+        input, select { padding: 12px; border-radius: 10px; border: 1px solid #d2d2d7; font-size: 15px; outline: none; margin-right: 10px; }
+        button { background: #007aff; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        
+        ul { padding: 0; list-style: none; }
+        li { padding: 10px; background: #f5f5f7; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;}
+        
+        /* 游戏大厅面板样式 */
+        .settings-box { border: 1px dashed #c7c7cc; padding: 20px; border-radius: 12px; margin: 20px 0; background: #fafafa;}
+        .host-badge { background: #ffcc00; color: #885500; font-weight: bold; border-radius: 6px; padding: 4px 8px; font-size: 12px; margin-right:8px;}
+
+        /* 实战棋盘 CSS */
+        .board-container { background: #c7c7cc; padding: 8px; border-radius: 10px; display: inline-block; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .board { display: grid; grid-template-columns: repeat(9, 45px); grid-template-rows: repeat(9, 45px); gap: 2px; }
+        .cell { 
+            background: #ffffff; 
+            cursor: pointer; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 20px; font-weight: bold; position: relative;
+            user-select: none; transition: background 0.1s;
+        }
+        .cell:hover { background: #f0f7ff; }
+        .cell-perm-x { background: #1c1c1e !important; }
+        .cell-placed-x { background: #636366 !important; color: white !important; }
+        .cell-letter { background: #ffcc00 !important; color: #885500; }
+        .my-turn-highlight { outline: 3px solid #007aff; outline-offset: 4px; box-shadow: 0 0 15px rgba(0,122,255,0.4); border-radius: 8px;}
+        
+        .player-dot {
+            width: 26px; height: 26px; border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 12px; font-weight: 800; border: 2px solid white;
+        }
+
+        .dashboard { padding: 20px; background: #f5f5f7; border-radius: 16px; margin-left: 20px; flex: 1; border: 1px solid #d2d2d7;}
+        .notice-board { padding: 16px; background: #e0efff; color: #004499; border-radius: 12px; font-weight: 600; margin-bottom: 20px; font-size: 18px; line-height: 1.4; transition: all 0.3s;}
+        
+        .role-card { background: white; padding: 12px; border-radius: 8px; margin-bottom:10px; display: flex; align-items: center; gap: 10px; transition: border 0.2s;}
+        .color-dot { width: 14px; height: 14px; border-radius: 50%; }
+        
+        #victoryOverlay {
+            position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); z-index: 999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .vic-text { font-size: 60px; color: #ffcc00; font-weight: 900; animation: jump 1s ease infinite; text-align:center;}
+        @keyframes jump { 0%,100% {transform: translateY(0);} 50% {transform: translateY(-20px);} }
+
+        /* 模态框 */
+        #rulesModal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 80%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- PANEL 1 -->
+    <div class="panel" id="lobbyPanel">
+        <h2>1. 选择下酒游戏 (Select Game)</h2>
+        <div class="game-grid">
+            <div class="game-card" id="card_treasure" onclick="selectGame('treasure_hunt')"><h3>👑 寻宝战 (Treasure Hunt)</h3><p>9x9格极限卡位！</p></div>
+            <div class="game-card" id="card_spy" onclick="selectGame('spy_game')"><h3>🎭 谁是卧底 (待解锁)</h3><p>仅作占位示意符。</p></div>
+        </div>
+        <div id="joinSection" class="hidden">
+            <input type="text" id="playerName" placeholder="昵称 (Max 15)" maxlength="15">
+            <input type="text" id="roomCode" placeholder="任意房号标识 (若空则自动生成)" maxlength="4" style="text-transform:uppercase;">
+            <button onclick="enterRoom()">进入房间大厅</button>
+        </div>
+    </div>
+
+    <!-- PANEL 2 -->
+    <div class="panel hidden" id="roomPanel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>2. 游戏大厅 <span style="color:#86868b; font-size:16px;">(Code: <b style="color:#007aff; font-size:24px;" id="displayRoomId"></b>)</span></h2>
+            <button onclick="document.getElementById('rulesModal').classList.remove('hidden')" style="background:#86868b;">📜 查看规则</button>
+        </div>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <!-- 玩家名单 -->
+            <div style="flex: 2; min-width: 300px;">
+                <h3>名单集结站</h3>
+                <ul id="playerList"></ul>
+            </div>
+
+            <!-- 房间设置 -->
+            <div style="flex: 1; min-width: 250px;" class="settings-box">
+                <h3 style="margin-top:0;">【房主特权】游戏配置</h3>
+                <label style="display:block; margin-bottom: 5px; font-size:14px;">最大人数限制:</label>
+                <select id="maxPlayersSelect" disabled onchange="changeSettings()" style="width: 100%; margin-bottom: 15px;">
+                    <option value="2">2 人对峙</option>
+                    <option value="3" selected>3 人混战</option>
+                    <option value="4">4 人修罗场</option>
+                </select>
+                <label style="display:block; margin-bottom: 5px; font-size:14px;">附加变体设定:</label>
+                <select id="gameModeSelect" disabled onchange="changeSettings()" style="width: 100%;">
+                    <option value="normal" selected>常规经典模式</option>
+                    <option value="rapid">竞速模式 (暂未实装)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="startBtn" onclick="startGame()" style="width:100%; margin-top:20px; background:#34c759;" disabled>👑 只有房主可以开始游戏</button>
+    </div>
+
+    <!-- PANEL 3 -->
+    <div class="panel hidden" id="gamePanel">
+        <div class="notice-board" id="sysNotice">正在构建世界...</div>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div class="board-container" id="boardCanvas">
+                <div class="board" id="gridWrapper"></div>
+            </div>
+            
+            <div class="dashboard" id="playersDash"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 弹窗合集 -->
+<div id="victoryOverlay" class="hidden">
+    <div class="vic-text" id="winnerLabel">🎉 WINNER 🎉</div>
+    <button onclick="location.reload()" style="margin-top:40px; background:#fff; color:#000; font-size:20px; padding:20px 40px; border-radius: 10px; cursor: pointer; border:none; font-weight:bold;">返回大厅换人</button>
+</div>
+
+<div id="rulesModal" class="hidden">
+    <div class="modal-content">
+        <h2>📜 寻宝之战 简明规则</h2>
+        <p>1. <b>阶段一：布设天罗地网 (PLACE X)</b><br>在轮到你的回合时，首先必须在地图的任何一个空地上点一下以打下一枚路障(X)。注意：<b>系统会严格把关，如果有人的路被你彻底封死了，此招将会被判定为非法死门！作为惩罚，这回合你将不许移动！</b></p>
+        <p>2. <b>阶段二：长途跋涉 (MOVE)</b><br>一旦成功施放阻碍，你可以控制你的角色光标向着周围<b>八个方位</b>（含斜对角）移动一格。</p>
+        <p>3. <b>致胜真理 (WIN)</b><br>每位玩家在右侧信息板都有专属分配的「暗金色宝藏点」。不要管别人，<b>最先踩进那个格子的人立刻登基获胜！</b></p>
+        <div style="text-align: right; margin-top: 20px;">
+            <button onclick="document.getElementById('rulesModal').classList.add('hidden')">确 认</button>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let currentHostId = null;
+    let selectedGame = null;
+    let localGameState = null;
+
+    // ----- UI 控制与调度 -----
+    function setView(view) {
+        ['lobby', 'room', 'game'].forEach(v => document.getElementById(v + 'Panel').classList.add('hidden'));
+        document.getElementById(view + 'Panel').classList.remove('hidden');
+    }
+
+    // [面板1] 选游戏与加入大厅
+    function selectGame(type) {
+        selectedGame = type;
+        document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
+        if (type === 'treasure_hunt') document.getElementById('card_treasure').classList.add('selected');
+        document.getElementById('joinSection').classList.remove('hidden');
+    }
+
+    function enterRoom() {
+        const name = document.getElementById('playerName').value || `Plr_${Math.floor(Math.random()*99)}`;
+        const code = document.getElementById('roomCode').value;
+        socket.emit('JOIN_OR_CREATE_ROOM', { roomId: code, playerName: name, gameType: selectedGame }, (res) => {
+            if (res.success) { 
+                document.getElementById('displayRoomId').innerText = res.room.id; 
+                syncRoomUI(res.room);
+                setView('room'); 
+            } else alert(res.error);
+        });
+    }
+
+    // [面板2] 大厅内部响应刷新
+    function syncRoomUI(room) {
+        currentHostId = room.hostId;
+        const isMeHost = (socket.id === room.hostId);
+        
+        // 渲染玩家列表 (包含复原的改名按钮功能)
+        const list = document.getElementById('playerList');
+        list.innerHTML = '';
+        room.players.forEach(p => {
+            const isMe = p.socketId === socket.id;
+            const li = document.createElement('li');
+            
+            let htmlStr = `<div>`;
+            if (p.isHost) htmlStr += `<span class="host-badge">👑 房主</span>`;
+            htmlStr += `<span style="font-size:16px; font-weight:500;">${p.name}</span></div>`;
+            
+            if (isMe) {
+                htmlStr += `<div style="display:flex; gap:5px; align-items:center;">
+                    <input type="text" id="renameInput" placeholder="临时改名" value="${p.name}" style="padding:6px; margin:0; width:100px; font-size:13px;" maxlength="15">
+                    <button onclick="doRename()" style="padding:6px 14px; font-size:13px; background:#e5e5ea; color:#1d1d1f;">修改昵称</button>
+                </div>`;
+            } else {
+                htmlStr += `<span style="font-size:13px; color:#86868b;">[ 对面设备 ]</span>`;
+            }
+            li.innerHTML = htmlStr;
+            list.appendChild(li);
+        });
+
+        // 渲染重置的设置区面板
+        document.getElementById('maxPlayersSelect').disabled = !isMeHost;
+        document.getElementById('maxPlayersSelect').value = room.settings.maxPlayers || 3;
+        document.getElementById('gameModeSelect').disabled = !isMeHost;
+
+        // 只有房主可以开始游戏
+        const btn = document.getElementById('startBtn');
+        if (socket.id === room.hostId) { btn.disabled = false; btn.innerText = "🚀 号令开战 (Start Game)"; } 
+        else { btn.disabled = true; btn.innerText = "🔒 等待房主开启..."; }
+    }
+
+    function doRename() {
+        const newName = document.getElementById('renameInput').value;
+        if (newName.trim()) socket.emit('RENAME', newName); 
+    }
+
+    function changeSettings() {
+        if (socket.id !== currentHostId) return;
+        const val = document.getElementById('maxPlayersSelect').value;
+        socket.emit('CHANGE_SETTINGS', { maxPlayers: parseInt(val) });
+    }
+
+    socket.on('ROOM_UPDATED', (room) => syncRoomUI(room) );
+    function startGame() { socket.emit('START_GAME', {}, (r)=>{if(!r.success) alert("只有房主有权利点这里哦。")}); }
+
+    // ======================================
+    // ⚔️ Gameplay Handlers [面板3]
+    // ======================================
+
+    socket.on('GAME_STARTED', (data) => {
+        setView('game');
+        renderFullBoard(data.gameState);
+    });
+
+    socket.on('GAME_STATE_UPDATED', (gameState) => {
+        renderFullBoard(gameState);
+    });
+
+    socket.on('GAME_ERROR', (msg) => {
+        // 如果后端报错，例如打 X 会导致死门，从这里弹窗警告当事人自己
+        alert("⚠️ 动作警告：" + msg);
+    });
+
+    function renderFullBoard(state) {
+        localGameState = state;
+        
+        // 更新大喇叭通知，如果是轮到我进行落子，改变颜色
+        const noticeEl = document.getElementById('sysNotice');
+        noticeEl.innerText = state.message;
+        const currentPlayer = state.players[state.turnIndex];
+        
+        if (currentPlayer.id === socket.id) {
+            noticeEl.style.background = '#34c759';
+            noticeEl.style.color = '#fff';
+        } else {
+            noticeEl.style.background = '#e0efff';
+            noticeEl.style.color = '#004499';
+        }
+        
+        // 游戏是否通关？
+        if (state.winner) {
+            document.getElementById('victoryOverlay').classList.remove('hidden');
+            document.getElementById('winnerLabel').innerText = state.message;
+            return;
+        }
+
+        const myTurnBox = document.getElementById('boardCanvas');
+        if (currentPlayer.id === socket.id) {
+            myTurnBox.classList.add('my-turn-highlight');
+        } else {
+            myTurnBox.classList.remove('my-turn-highlight');
+        }
+
+        // 重新灌浆 9x9 CSS 格子
+        const wrapper = document.getElementById('gridWrapper');
+        wrapper.innerHTML = '';
+        
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const cellVal = state.board[r][c];
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'cell';
+                
+                if (cellVal === 'X') { cellDiv.classList.add('cell-perm-x'); cellDiv.innerText = 'X'; }
+                else if (cellVal === 'x') { cellDiv.classList.add('cell-placed-x'); cellDiv.innerText = 'x'; }
+                else if (cellVal.length === 1 && cellVal !== '') { cellDiv.classList.add('cell-letter'); cellDiv.innerText = cellVal; }
+                
+                // 将真实的网格坐标注入每一个原生 DOM 作为回调传参！
+                cellDiv.onclick = () => handleBoardClick(r, c);
+
+                const occupants = state.players.filter(p => p.currentPos.r === r && p.currentPos.c === c);
+                occupants.forEach((p, idx) => {
+                    const peg = document.createElement('div');
+                    peg.className = 'player-dot';
+                    peg.style.background = p.color;
+                    peg.style.transform = `translate(${idx * 10}px, ${idx * 10}px)`; 
+                    peg.innerText = p.name.substring(0,2);
+                    cellDiv.appendChild(peg);
+                });
+
+                wrapper.appendChild(cellDiv);
+            }
+        }
+
+        // 刷新左侧的情报图表信息
+        const dash = document.getElementById('playersDash');
+        dash.innerHTML = '<h3 style="margin-top:0">各路豪强底细</h3>';
+        state.players.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'role-card';
+            if (i === state.turnIndex) {
+                 div.style.border = `2px solid ${p.color}`;
+                 div.style.boxShadow = `0 4px 12px ${p.color}40`;
+            } else {
+                 div.style.border = '2px solid transparent';
+            }
+            
+            div.innerHTML = `
+                <div class="color-dot" style="background:${p.color}"></div>
+                <div style="flex:1">
+                    <div style="font-weight:bold; ${socket.id===p.id?'color:#007aff;':''}">${p.name} ${socket.id===p.id?'(ME)':''}</div>
+                    <div style="font-size:12px; color:#666;">奉旨前往宝库：<b style="color:#000; font-size:16px;">[ ${p.targetName} ]</b></div>
+                </div>
+            `;
+            dash.appendChild(div);
+        });
+    }
+
+    // 核心投递：把鼠标点的坐标传递给后端核仲裁
+    function handleBoardClick(r, c) {
+        if (!localGameState) return;
+        
+        // 虽然我们可以用 localGameState 判断现在是不是我的回合来阻挡点击
+        // 但安全起见统统发给后端，后端 `processAction` 有非常严格的白名单兜底
+        if (localGameState.phase === 'PLACE_X') {
+            socket.emit('GAME_ACTION', { type: 'PLACE_X', payload: { r, c } });
+        } else if (localGameState.phase === 'MOVE') {
+            socket.emit('GAME_ACTION', { type: 'MOVE', payload: { r, c } });
+        }
+    }
+
+</script>
+</body>
+</html>
