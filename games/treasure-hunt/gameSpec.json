@@ -1,0 +1,54 @@
+{
+    "id": "treasure_hunt",
+    "name": "寻宝之战",
+    "description": "回合制棋盘策略游戏",
+    "version": "1.0.0",
+    "author": "Ken",
+    "gamePlay": {
+        "maxPlayers": 3,
+        "minPlayers": 1,
+        "isTeamBased": false,
+        "boardSize": {
+            "rows": 9,
+            "cols": 9,
+            "cellType": "square"
+        },
+        "turnBased": {
+            "isSerialTurns": true,
+            "turnsPerRound": 1,
+            "timePerTurn": null
+        }
+    },
+    "phases": [
+        {
+            "id": "SETUP_POSITIONS",
+            "name": "战前准备",
+            "description": "所有玩家同时为下一个玩家配置藏宝点和出发点"
+        },
+        {
+            "id": "PLACE_X",
+            "name": "放置障碍",
+            "description": "轮流放置障碍块，但不能封死任何玩家通往其藏宝点的路径"
+        },
+        {
+            "id": "MOVE",
+            "name": "移动阶段",
+            "description": "轮流移动棋子，每次只能移动一格，目标是到达自己的藏宝点"
+        }
+    ],
+    "rules": {
+        "winConditions": [
+            "第一个到达自己藏宝点的玩家获胜",
+            "游戏死锁时，最短路径最少的玩家获胜"
+        ],
+        "specialMechanics": [
+            "天谴机制：试图封死活路的玩家跳过本轮移动权"
+        ]
+    },
+    "tags": [
+        "strategy",
+        "board-game",
+        "turn-based",
+        "competitive"
+    ]
+}

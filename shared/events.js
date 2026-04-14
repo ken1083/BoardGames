@@ -1,0 +1,25 @@
+/**
+ * shared/events.js
+ * 所有事件常量的统一管理
+ */
+
+export const CLIENT_EVENTS = {
+    // 房间相关
+    'JOIN_OR_CREATE_ROOM': 'JOIN_OR_CREATE_ROOM',
+    'RENAME': 'RENAME',
+    'CHANGE_SETTINGS': 'CHANGE_SETTINGS',
+    'START_GAME': 'START_GAME',
+    'GAME_ACTION': 'GAME_ACTION',
+    'END_GAME': 'END_GAME',
+    'CHAT_MESSAGE': 'CHAT_MESSAGE'
+};
+
+export const SERVER_EVENTS = {
+    // 房间相关
+    'ROOM_UPDATED': 'ROOM_UPDATED',
+    'GAME_STARTED': 'GAME_STARTED',
+    'GAME_STATE_UPDATED': 'GAME_STATE_UPDATED',
+    'GAME_ERROR': 'GAME_ERROR',
+    'NEW_CHAT_MESSAGE': 'NEW_CHAT_MESSAGE',
+    'FORCE_BACK_TO_ROOM': 'FORCE_BACK_TO_ROOM'
+};

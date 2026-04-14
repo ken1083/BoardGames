@@ -1,0 +1,8 @@
+{
+  "name": "onlinegames-workspace",
+  "private": true,
+  "workspaces": [
+    "platform/web",
+    "platform/server"
+  ]
+}
