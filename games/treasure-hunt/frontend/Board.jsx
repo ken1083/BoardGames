@@ -373,6 +373,10 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                     return "等待其他玩家完成配置...";
                                 })()}
                             </div>
+                        ) : isMyTurn ? (
+                            <div className="text-sm font-bold text-green-700 bg-green-50 px-6 py-2 rounded-xl shadow-sm border border-green-200 animate-pulse">
+                                👉 {currentPlayer?.name}，请选择{gameState.phase === 'PLACE_X' ? '要放置障碍的格子' : '要移动的目标'}
+                            </div>
                         ) : null}
                     </div>
 
@@ -527,7 +531,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                             </div>
                                             <div className="mt-2 text-[11px] sm:text-xs font-bold grid grid-cols-2 gap-y-1">
                                                 {p.startPos ? (
-                                                    <div className="text-neutral-500">出发: [{p.startPos.r},{p.startPos.c}]</div>
+                                                    <div className="text-neutral-500">出发: {p.startName}</div>
                                                 ) : <div />}
 
                                                 {isMyNext ? (

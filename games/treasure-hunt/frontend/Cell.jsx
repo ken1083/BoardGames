@@ -51,7 +51,7 @@ export default function Cell({
 
     // 点击回调
     onClick,
-    
+
     // 允许该格子显示为目标的拥有者ID
     visibleTargetId
 }) {
@@ -108,17 +108,11 @@ export default function Cell({
     // 检测这个格子是否是某个玩家的目标（宝藏位置）
     // ═══════════════════════════════════════════════════════════════════════════════
 
-    let isTarget = false;
-    let targetColor = null;
-
-    if (!isSetupPhase && gameState.phase) {
-        const targetOwner = gameState.players.find(p => p.targetPos && p.targetPos.r === r && p.targetPos.c === c);
-        // 仅仅只显示我们配置了的玩家的目标，其它人的藏宝点完全保密
-        if (targetOwner && targetOwner.id === visibleTargetId) {
-            isTarget = true;
-            targetColor = targetOwner.color;
-        }
-    }
+    // Collect ALL treasures pointing to this cell that are visible to current player
+    // visibleTargetId是我配置的下一个玩家的ID，只有该玩家的藏宝点才对我可见
+    const visibleTreasures = !isSetupPhase && gameState.phase && visibleTargetId
+        ? gameState.players.filter(p => p.targetPos && p.targetPos.r === r && p.targetPos.c === c && p.id === visibleTargetId)
+        : [];
 
     // Check if this cell is currently the one pre-selected by the player
     const isTempSelected = myTempSelection && myTempSelection.r === r && myTempSelection.c === c;
@@ -141,19 +135,23 @@ export default function Cell({
             {/* 背景内容：字母（A-H） */}
             {/* 如果格子里有字母内容且没有玩家棋子，则显示字母 */}
             {content && occupants.length === 0 && <span>{content}</span>}
-            
-            {/* 宝藏标记（红旗或颜色标识靶心） */}
-            {isTarget && (
-               <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.5)] z-10" style={{ backgroundColor: targetColor }} title="已暴露的藏宝点"></div>
+
+            {/* 宝藏标记（多个彩色点，防止重叠） */}
+            {visibleTreasures.length > 0 && (
+                <div
+                    className="absolute top-1 right-1 w-3 h-3 z-10 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.5)]"
+                    style={{ backgroundColor: visibleTreasures[0].color }}
+                    title={`${visibleTreasures[0].name}的藏宝点`}
+                ></div>
             )}
 
             {/* 玩家棋子（如果此格子有玩家） */}
             {occupants.length > 0 && (
                 <div className="absolute inset-[8px] sm:inset-[10px] rounded-full overflow-hidden flex shadow-md ring-2 ring-white/10">
                     {occupants.map(occ => (
-                        <div 
-                            key={occ.id} 
-                            className="flex-1 h-full flex justify-center items-center relative" 
+                        <div
+                            key={occ.id}
+                            className="flex-1 h-full flex justify-center items-center relative"
                             style={{ backgroundColor: occ.color }}
                             title={occ.name}
                         >

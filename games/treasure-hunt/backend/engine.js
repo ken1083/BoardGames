@@ -57,6 +57,7 @@ class TreasureHunt {
                 name: p.name,
                 color: COLORS[index % COLORS.length],
                 startPos: null,        // 待配置
+                startName: '???',       // 战前准备，初始未知
                 currentPos: null,      // 待配置
                 targetPos: null,       // 待配置
                 targetName: '???',       // 战前准备，初始未知
@@ -462,6 +463,7 @@ class TreasureHunt {
             // 保存出发点
             targetPlayer.startPos = { r, c };
             targetPlayer.currentPos = { r, c };
+            targetPlayer.startName = cellVal;
             gameState.playerConfigCount[socketId] = 2;
 
             // 清除预选
@@ -536,7 +538,7 @@ class TreasureHunt {
 
         // 放置成功，进入移动阶段
         gameState.phase = 'MOVE';
-        gameState.message = `障碍落地！请 ${currentPlayer.name} 前进一格！`;
+        gameState.message = `障碍已成功放置在 (${r}, ${c})！请 ${currentPlayer.name} 前进一格！`;
         return { success: true };
     }
 
@@ -601,9 +603,10 @@ class TreasureHunt {
         }
 
         // 未赢：轮到下一个玩家放障碍
+        const curPlayerName = gameState.players[gameState.turnIndex].name; // 当前执行移动玩家的名字
         gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
         gameState.phase = 'PLACE_X';
-        gameState.message = `现在轮到 ${gameState.players[gameState.turnIndex].name} 行动。`;
+        gameState.message = `${curPlayerName} 已移动到 (${r}, ${c})！现在轮到 ${gameState.players[gameState.turnIndex].name} 行动。`;
         return { success: true };
     }
 }
