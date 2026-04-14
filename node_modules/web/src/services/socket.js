@@ -19,18 +19,17 @@ import { io } from 'socket.io-client';
 /**
  * 服务器URL配置
  * 
- * import.meta.env.DEV 是Vite提供的环境变量
- * 表示当前是否在开发模式
+ * 开发模式且通过 localhost 访问：
+ *   - 直接连接 localhost:3000（本地后端服务器）
  * 
- * 开发模式（DEV=true）：
- *   - 指向 localhost:3000（本地后端服务器）
- *   - 利于快速开发和调试
+ * 开发模式但通过外部URL访问（如 Pinggy 隧道）：
+ *   - 使用 '/'（通过 Vite 代理转发到后端）
  * 
- * 生产模式（DEV=false）：
- *   - 指向 '/'（同域名）
- *   - 假设前后端部署在同一域名
+ * 生产模式：
+ *   - 使用 '/'（同域名部署）
  */
-const SERVER_URL = import.meta.env.DEV ? 'http://localhost:3000' : '/';
+const isLocalDev = import.meta.env.DEV && window.location.hostname === 'localhost';
+const SERVER_URL = isLocalDev ? 'http://localhost:3000' : '/';
 
 /**
  * 创建Socket.io客户端实例
