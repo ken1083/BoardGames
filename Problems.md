@@ -41,6 +41,12 @@
 
 3. **Notification setting** - 有些公告是弹出通知，过几秒消失。有些是windows confirm。统一使用弹出通知。
 
+4. **Room ID constraints** - 房间ID应该目前没有限制，汉字可以是room ID, 3个char也可以是room ID. Room ID should be:
+   - 4 characters
+   - only contain letters and numbers ([A-Z0-9])
+   - This constraints applied to both room creation and room joining (and also random create room id)
+   - When room ID is invalid, there should be a reminder message.
+
 ---
 
 # 🔵 Low Priority - Future Enhancements
