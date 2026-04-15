@@ -117,6 +117,21 @@ export default function Cell({
     // Check if this cell is currently the one pre-selected by the player
     const isTempSelected = myTempSelection && myTempSelection.r === r && myTempSelection.c === c;
 
+    // 检测是否为最新放置的障碍
+    const isLatestBlock = gameState.latestBlock
+        && gameState.latestBlock.r === r
+        && gameState.latestBlock.c === c;
+
+    // 检测是否为最新移动到的格子
+    const isLatestMove = gameState.latestMove
+        && gameState.latestMove.r === r
+        && gameState.latestMove.c === c;
+
+    // 获取最新高亮的玩家颜色（用于inline style）
+    const latestHighlightColor = isLatestBlock ? gameState.latestBlock.color
+        : isLatestMove ? gameState.latestMove.color
+            : null;
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // JSX渲染
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -125,42 +140,53 @@ export default function Cell({
         <div
             onClick={() => onClick(r, c)}
             // cn()函数合并多个类名，处理冲突
-            className={cn(
-                "aspect-square w-full rounded-md flex items-center justify-center font-bold text-xl sm:text-2xl relative box-border",
-                cellStyle,  // 基础样式（THEME.cell/THEME.perm/THEME.obst）
-                interactive ? THEME.activeCell : "",  // 如果可交互则添加悬停效果
-                isTempSelected ? "border-[3px] sm:border-4 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)]" : ""
-            )}
+            className={
+                cn(
+                    "aspect-square w-full rounded-md flex items-center justify-center font-bold text-xl sm:text-2xl relative box-border",
+                    cellStyle,  // 基础样式（THEME.cell/THEME.perm/THEME.obst）
+                    interactive ? THEME.activeCell : "",  // 如果可交互则添加悬停效果
+                    (isLatestBlock || isLatestMove) ? "border-[3px]" : "",
+                    isTempSelected ? "border-[3px] sm:border-4 border-[#a89574]" : "",
+                )
+            }
+            style={latestHighlightColor && !isTempSelected ? {
+                borderColor: latestHighlightColor,
+                boxShadow: `0 0 10px ${latestHighlightColor}66`
+            } : undefined}
         >
             {/* 背景内容：字母（A-H） */}
             {/* 如果格子里有字母内容且没有玩家棋子，则显示字母 */}
             {content && occupants.length === 0 && <span>{content}</span>}
 
             {/* 宝藏标记（多个彩色点，防止重叠） */}
-            {visibleTreasures.length > 0 && (
-                <div
-                    className="absolute top-1 right-1 w-3 h-3 z-10 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.5)]"
-                    style={{ backgroundColor: visibleTreasures[0].color }}
-                    title={`${visibleTreasures[0].name}的藏宝点`}
-                ></div>
-            )}
+            {
+                visibleTreasures.length > 0 && (
+                    <div
+                        className="absolute top-1 right-1 w-3 h-3 z-10 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.5)]"
+                        style={{ backgroundColor: visibleTreasures[0].color }}
+                        title={`${visibleTreasures[0].name}的藏宝点`}
+                    ></div>
+                )
+            }
 
             {/* 玩家棋子（如果此格子有玩家） */}
-            {occupants.length > 0 && (
-                <div className="absolute inset-[8px] sm:inset-[10px] rounded-full overflow-hidden flex shadow-md ring-2 ring-white/10">
-                    {occupants.map(occ => (
-                        <div
-                            key={occ.id}
-                            className="flex-1 h-full flex justify-center items-center relative"
-                            style={{ backgroundColor: occ.color }}
-                            title={occ.name}
-                        >
-                            {/* 棋子内部给细微的光泽效果或ping标志，为防止重叠，缩小ping点尺寸 */}
-                            <div className="w-[4px] h-[4px] bg-white rounded-full animate-ping opacity-60"></div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+            {
+                occupants.length > 0 && (
+                    <div className="absolute inset-[8px] sm:inset-[10px] rounded-full overflow-hidden flex shadow-md ring-2 ring-white/10">
+                        {occupants.map(occ => (
+                            <div
+                                key={occ.id}
+                                className="flex-1 h-full flex justify-center items-center relative"
+                                style={{ backgroundColor: occ.color }}
+                                title={occ.name}
+                            >
+                                {/* 棋子内部给细微的光泽效果或ping标志，为防止重叠，缩小ping点尺寸 */}
+                                <div className="w-[4px] h-[4px] bg-white rounded-full animate-ping opacity-60"></div>
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
+        </div >
     );
 }

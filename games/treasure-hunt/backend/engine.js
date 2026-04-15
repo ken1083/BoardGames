@@ -536,6 +536,9 @@ class TreasureHunt {
         // 通过了死路检测，放置障碍
         gameState.board[r][c] = 'x';
 
+        // 记录最新放置的障碍位置及玩家颜色（用于前端高亮）
+        gameState.latestBlock = { r, c, color: currentPlayer.color };
+
         // 放置成功，进入移动阶段
         gameState.phase = 'MOVE';
         gameState.message = `障碍已成功放置在 (${r}, ${c})！请 ${currentPlayer.name} 前进一格！`;
@@ -576,6 +579,9 @@ class TreasureHunt {
 
         // 成功移动：更新当前位置
         currentPlayer.currentPos = { r, c };
+
+        // 记录最新移动的位置及玩家颜色（用于前端高亮）
+        gameState.latestMove = { r, c, color: currentPlayer.color };
 
         // 【检查胜利条件】使用checkWinCondition方法判断两个胜利条件
         const winner = this.checkWinCondition(gameState, currentPlayer);

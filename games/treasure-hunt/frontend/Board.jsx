@@ -528,13 +528,14 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                                 <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: p.color }}></div>
                                                 <span className="font-bold text-sm text-neutral-800 truncate">{p.name}</span>
                                                 {p.id === socket.id && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">You</span>}
+                                                {p.id === initialRoomData?.hostId && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Host</span>}
                                             </div>
                                             <div className="mt-2 text-[11px] sm:text-xs font-bold grid grid-cols-2 gap-y-1">
                                                 {p.startPos ? (
                                                     <div className="text-neutral-500">出发: {p.startName}</div>
                                                 ) : <div />}
 
-                                                {isMyNext ? (
+                                                {(isMyNext || gameState.winner) ? (
                                                     <div className="text-blue-600 text-right">藏宝: {p.targetName}</div>
                                                 ) : (
                                                     <div className="text-neutral-400 text-right">藏宝: ???</div>

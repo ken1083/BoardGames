@@ -27,12 +27,6 @@
 1. **Multi-winner deadlock logic unclear** - 对于胜利条件2（死锁情况）：若多位玩家到其藏宝点的剩余格子数一样且是最少（即multi winners），目前的代码实现是怎样？实际应该要怎么判断（多位赢家？看谁先行动？还是其他？）
    - Need to clarify: multiple winners, first to act, or other logic?
 
-2. **Announce treasure spots at game end** - 游戏结束时，Player intel 可以公告所有玩家的藏宝点（从 ？？？变成字母）
-   - Important for final game state transparency
-
-3. **Latest block highlight** - 对于最近放置的障碍（latest placed block），可以有一个border highlight用于提示所有玩家。
-   - Improves board clarity
-
 ---
 
 # 🟡 Medium Priority - Feature Enhancements
@@ -44,6 +38,8 @@
     - 不区分障碍（current mode）（default）：统一障碍物的颜色，你不知道障碍物是哪个玩家放的（除非你看公告/记下来了）
     - 区分障碍：会以玩家颜色渲染障碍物，你可以知道障碍物是哪个玩家放的
    - Optional game mode variant
+
+3. **Notification setting** - 有些公告是弹出通知，过几秒消失。有些是windows confirm。统一使用弹出通知。
 
 ---
 
@@ -68,3 +64,9 @@
 3. 公告没有通知玩家放置障碍物以及移动目标的坐标。
 
 4. Player intel's 出发地点显示的是坐标 (r,c)。可是，由于出发点只能是字母格（just like 藏宝点），所以可以直接显示字母for出发点。
+
+5. Player intel 可以显示谁是host while in game
+
+6. 游戏结束时，Player intel 可以公告所有玩家的藏宝点（从 ？？？变成字母）
+
+7. 对于最近放置的障碍以及最近移动目标格子，可以有一个border highlight用于提示所有玩家。

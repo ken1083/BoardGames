@@ -16,7 +16,7 @@ const TREASURE_HUNT_PERMANENT_X = [
     { r: 6, c: 2 }, { r: 6, c: 6 }, { r: 8, c: 3 }, { r: 8, c: 5 }
 ];
 
-const TREASURE_HUNT_COLORS = ['#ff3b30', '#007aff', '#34c759', '#e600ffff'];
+const TREASURE_HUNT_COLORS = ['#ff3b30', '#007aff', '#8d30ff', '#34c759', '#5856d6', '#5ac8fa'];
 
 const GAME_PHASES = {
     SETUP_POSITIONS: 'SETUP_POSITIONS',
