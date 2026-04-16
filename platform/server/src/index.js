@@ -214,6 +214,30 @@ io.on('connection', (socket) => {
     });
 
     // ═════════════════════════════════════════════════════════════════════════════════
+    // 【事件】RESTART_GAME - 房主重开游戏
+    // ═════════════════════════════════════════════════════════════════════════════════
+    socket.on('RESTART_GAME', () => {
+        const roomId = socketToRoom.get(socket.id);
+        const room = roomManager.getRoom(roomId);
+
+        // 权限检查：只有房主能重开游戏，且游戏正在进行中
+        if (room && room.hostId === socket.id && room.status === 'playing') {
+            // 重新初始化游戏状态
+            room.gameState = gameDispatcher.initializeGame(room.gameType, room.players);
+
+            // 向房间内所有玩家广播：游戏已重开（复用 GAME_STARTED 事件）
+            io.to(roomId).emit('GAME_STARTED', { room, gameState: room.gameState });
+
+            // 发送系统消息
+            io.to(roomId).emit('NEW_CHAT_MESSAGE', {
+                sender: '系统',
+                text: '房主重开了游戏',
+                time: Date.now()
+            });
+        }
+    });
+
+    // ═════════════════════════════════════════════════════════════════════════════════
     // 【事件】END_GAME - 房主结束游戏，返回大厅
     // ═════════════════════════════════════════════════════════════════════════════════
     socket.on('END_GAME', () => {

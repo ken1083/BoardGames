@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { socket } from '../services/socket';
+import { socket } from '../core/services/socket';
 
 export function useGame(initialGameState) {
     const [gameState, setGameState] = useState(initialGameState);

@@ -16,11 +16,12 @@
  */
 
 import { useState } from 'react';
-import { socket } from '../services/socket';
+import { socket } from '../core/services/socket';
 import { cn } from '../lib/utils';
-import { User, Hash, ArrowLeft, BookOpen } from 'lucide-react';
+import { User, Hash, ArrowLeft, BookOpen, Info } from 'lucide-react';
+import { isValidRoomId } from '../../../../shared/validators';
 
-export default function GameMenu({ gameDef, onJoined, onBack }) {
+export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) {
     // ═══════════════════════════════════════════════════════════════════════════════
     // 状态管理：表单输入和加载状态
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -64,6 +65,13 @@ export default function GameMenu({ gameDef, onJoined, onBack }) {
         e.preventDefault();
 
         setError('');
+
+        // 验证房间ID：如果用户输入了房间号，必须符合格式要求
+        if (roomCode.trim().length > 0 && !isValidRoomId(roomCode.trim())) {
+            setError('房间号必须是4个字符，仅能包含字母和数字 (A-Z, 0-9)');
+            return;
+        }
+
         setIsLoading(true);
 
         // 如果玩家未输入昵称，则自动生成一个
@@ -174,6 +182,7 @@ export default function GameMenu({ gameDef, onJoined, onBack }) {
                 受控输入：与name类似
                 maxLength={4}：最多4个字符
                 onChange中调用.toUpperCase()：确保输入的房间号码是大写
+                仅允许 A-Z 和 0-9
                 
                 注意：不能直接在JSX中修改e.target.value，必须通过setRoomCode更新state
                 错误 ❌：e.target.value = e.target.value.toUpperCase()
@@ -183,11 +192,31 @@ export default function GameMenu({ gameDef, onJoined, onBack }) {
                                 type="text"
                                 maxLength={4}
                                 value={roomCode}
-                                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                                onChange={(e) => {
+                                    const upperVal = e.target.value.toUpperCase();
+                                    // 只允许字母和数字
+                                    const filtered = upperVal.replace(/[^A-Z0-9]/g, '');
+                                    setRoomCode(filtered);
+                                }}
                                 placeholder="留空即为创建新房间"
                                 className="w-full pl-10 pr-4 py-3.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-bold text-neutral-900 placeholder:text-neutral-400 uppercase tracking-widest"
                             />
                         </div>
+                        {/* 房间号验证反馈 */}
+                        {roomCode.length > 0 && (
+                            <div className={`text-xs font-semibold ml-1 ${roomCode.length === 4 ? 'text-green-600' : 'text-amber-600'
+                                }`}>
+                                {roomCode.length === 4 ? '✓ 房间号有效' : '⚠ 共需要4个字母/数字'}
+                            </div>
+                        )}
+
+                        {/* 活动房间提醒 */}
+                        {activeRoomData && activeRoomData.gameType === gameDef.id && (
+                            <div className="mt-2 p-3 bg-blue-50 text-blue-700 text-sm font-semibold rounded-xl flex items-center gap-2 border border-blue-100">
+                                <Info className="shrink-0" size={16} />
+                                <span>你有一个进行中的房间 (Room {activeRoomData.id})</span>
+                            </div>
+                        )}
                     </div>
 
                     {/*
@@ -207,8 +236,8 @@ export default function GameMenu({ gameDef, onJoined, onBack }) {
           */}
                     <button
                         type="submit"
-                        disabled={isLoading}
-                        className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-black/10 flex items-center justify-center gap-2 mt-4"
+                        disabled={isLoading || (roomCode.length > 0 && !isValidRoomId(roomCode))}
+                        className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-black/10 flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {/*
               三元运算符：根据roomCode长度显示不同文案

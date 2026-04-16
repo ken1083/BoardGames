@@ -16,11 +16,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { socket } from '../services/socket';
+import { socket } from '../core/services/socket';
 import { cn } from '../lib/utils';
-import { Crown, Users, Settings, Play, Pencil, Home, LogOut } from 'lucide-react';
+import { Crown, Users, Settings, Play, Pencil, Home, LogOut, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useDialog } from '../core/contexts/DialogContext';
 
-export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLobby, onBackToGameMenu }) {
+export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLobby, onLeaveRoom, onBackToGameMenu }) {
     // ═══════════════════════════════════════════════════════════════════════════════
     // 状态管理
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -30,11 +31,13 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
      * 初始值来自App.jsx传来的initialRoomData
      */
     const [room, setRoom] = useState(initialRoomData);
+    const { showToast } = useDialog();
 
     /**
      * 重命名模式开关：true时显示输入框，false时显示昵称
      */
     const [isRenaming, setIsRenaming] = useState(false);
+
 
     /**
      * 新昵称输入框的值
@@ -82,8 +85,12 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
 
     const handleStartGame = () => {
         socket.emit('START_GAME', {}, (res) => {
-            if (!res.success) alert("Failed to start game.");
+            if (!res.success) showToast("Failed to start game.", "error");
         });
+    };
+
+    const handleReorder = (playerSocketId, direction) => {
+        socket.emit('REORDER_PLAYERS', { playerSocketId, direction });
     };
 
     const handleRename = () => {
@@ -103,14 +110,15 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
         }
     };
 
-    const handleLeaveToServerSelection = () => {
-        socket.emit('LEAVE_ROOM');
-        onBackToGameMenu();
+    const handleLeaveToLobby = () => {
+        // Soft leave: don't tell the server to abandon the room
+        onBackToLobby();
     };
 
-    const handleLeaveToLobby = () => {
+    const handleHardLeaveRoom = () => {
+        // Hard leave
         socket.emit('LEAVE_ROOM');
-        onBackToLobby();
+        if (onLeaveRoom) onLeaveRoom();
     };
 
     return (
@@ -124,7 +132,16 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                         </h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        {/* 返回主大厅按钮 (Lobby) */}
+                        {/* 退出房间按钮 (Hard Leave) */}
+                        <button
+                            onClick={handleHardLeaveRoom}
+                            title="Leave Room"
+                            className="flex items-center gap-2 text-sm font-bold justify-center text-red-500 hover:text-red-700 bg-white border border-red-200 hover:border-red-400 hover:shadow-sm px-4 h-11 rounded-xl transition-all"
+                        >
+                            <LogOut size={20} />
+                            <span className="hidden sm:inline">Leave</span>
+                        </button>
+                        {/* 返回主大厅按钮 (Soft Leave) */}
                         <button
                             onClick={handleLeaveToLobby}
                             title="Back to Lobby"
@@ -132,14 +149,6 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                         >
                             <Home size={20} />
                             Lobby
-                        </button>
-                        {/* 离开房间回选择页 (GameMenu) */}
-                        <button
-                            onClick={handleLeaveToServerSelection}
-                            className="flex items-center gap-2 text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 hover:border-red-200 hover:shadow-sm px-4 h-11 rounded-xl transition-all"
-                        >
-                            <LogOut size={16} />
-                            Leave
                         </button>
                         {/* 房间号展示卡片 */}
                         <div className="bg-white px-5 h-11 flex items-center rounded-xl shadow-sm border border-neutral-200 ml-2">
@@ -169,7 +178,7 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
               每个玩家对象包含：socketId, name, isHost等属性
             */}
                             <ul className="space-y-3">
-                                {room.players.map(p => {
+                                {room.players.map((p, idx) => {
                                     // 判断当前遍历的玩家是否是自己
                                     const isMe = p.socketId === socket.id;
 
@@ -185,6 +194,26 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                         >
                                             {/* 左侧：玩家头像和信息 */}
                                             <div className="flex items-center gap-3">
+                                                {/* 房主可见的排序按钮 */}
+                                                {isMeHost && (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <button
+                                                            disabled={idx === 0}
+                                                            onClick={() => handleReorder(p.socketId, -1)}
+                                                            className="p-0.5 text-neutral-400 hover:text-blue-600 disabled:opacity-20 transition-colors"
+                                                        >
+                                                            <ChevronUp size={16} />
+                                                        </button>
+                                                        <button
+                                                            disabled={idx === room.players.length - 1}
+                                                            onClick={() => handleReorder(p.socketId, 1)}
+                                                            className="p-0.5 text-neutral-400 hover:text-blue-600 disabled:opacity-20 transition-colors"
+                                                        >
+                                                            <ChevronDown size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 {/* 玩家头像圆圈：初始字母 */}
                                                 <div className={cn(
                                                     "w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md",
@@ -198,9 +227,9 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-bold text-neutral-900">{p.name}</span>
                                                         {/*
-                            条件渲染 &&：只有主持人才显示HOST标签
-                            p.isHost ? 显示标签 : 不显示
-                          */}
+                                                            条件渲染 &&：只有主持人才显示HOST标签
+                                                            p.isHost ? 显示标签 : 不显示
+                                                          */}
                                                         {p.isHost && (
                                                             <span className="bg-amber-100 text-amber-700 text-xs font-black px-2 py-0.5 rounded-md flex items-center gap-1">
                                                                 <Crown size={12} /> HOST
@@ -218,10 +247,10 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                             {isMe && (
                                                 <div>
                                                     {/*
-                          三元运算符：根据isRenaming状态显示不同的UI
-                          true: 显示输入框和保存按钮
-                          false: 显示编辑按钮（铅笔icon）
-                        */}
+                                                          三元运算符：根据isRenaming状态显示不同的UI
+                                                          true: 显示输入框和保存按钮
+                                                          false: 显示编辑按钮（铅笔icon）
+                                                        */}
                                                     {isRenaming ? (
                                                         // 编辑模式：输入框 + 保存按钮
                                                         <div className="space-y-1.5">
@@ -271,6 +300,7 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                         </li>
                                     );
                                 })}
+
                             </ul>
                         </div>
                     </div>
@@ -316,31 +346,43 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
 
                             {/* 启动游戏按钮 */}
                             <div className="pt-4 border-t border-neutral-100">
-                                <button
-                                    onClick={handleStartGame}
-                                    // 禁用条件：不是主持人 或 实际人数不等于设定人数
-                                    disabled={!isMeHost || room.players.length !== room.settings.maxPlayers}
-                                    className={cn(
-                                        "w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all",
-                                        isMeHost && room.players.length === room.settings.maxPlayers
-                                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30"
-                                            : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
-                                    )}
-                                >
-                                    <Play size={20} className={isMeHost && room.players.length === room.settings.maxPlayers ? "fill-white" : "fill-neutral-400"} />
-                                    START GAME
-                                </button>
+                                {room.status === 'playing' ? (
+                                    <button
+                                        onClick={() => onGameReady(room.gameState)}
+                                        className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 animate-pulse"
+                                    >
+                                        <Play size={20} className="fill-white" />
+                                        REJOIN GAME
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={handleStartGame}
+                                            // 禁用条件：不是主持人 或 实际人数不等于设定人数
+                                            disabled={!isMeHost || room.players.length !== room.settings.maxPlayers}
+                                            className={cn(
+                                                "w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all",
+                                                isMeHost && room.players.length === room.settings.maxPlayers
+                                                    ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                                                    : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                                            )}
+                                        >
+                                            <Play size={20} className={isMeHost && room.players.length === room.settings.maxPlayers ? "fill-white" : "fill-neutral-400"} />
+                                            START GAME
+                                        </button>
 
-                                {/* 非主持人提示 */}
-                                {!isMeHost && (
-                                    <p className="text-center text-xs font-semibold text-neutral-400 mt-3">You are not the Host.</p>
-                                )}
+                                        {/* 非主持人提示 */}
+                                        {!isMeHost && (
+                                            <p className="text-center text-xs font-semibold text-neutral-400 mt-3">You are not the Host.</p>
+                                        )}
 
-                                {/* 人数不符提示 */}
-                                {isMeHost && room.players.length !== room.settings.maxPlayers && (
-                                    <p className="text-center text-xs font-semibold text-amber-500 mt-3">
-                                        需要 {room.settings.maxPlayers} 人（当前 {room.players.length} 人）
-                                    </p>
+                                        {/* 人数不符提示 */}
+                                        {isMeHost && room.players.length !== room.settings.maxPlayers && (
+                                            <p className="text-center text-xs font-semibold text-amber-500 mt-3">
+                                                需要 {room.settings.maxPlayers} 人（当前 {room.players.length} 人）
+                                            </p>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>

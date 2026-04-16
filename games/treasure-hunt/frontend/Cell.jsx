@@ -12,7 +12,7 @@
  * 4. 显示虫聚动画（animate-ping）表示是否可交互
  * 
  * Props说明（来自父组件Board.jsx）：
- * - r, c：格子的行列坐标（0-8）
+ * - r, c：格子的行列坐标（1-9）
  * - value：格子的内容（字母、X/x或空字符串）
  * - gameState：整个游戏状态对象
  * - isSetupPhase：是否在战前准备阶段
@@ -28,7 +28,7 @@
  */
 
 import { cn } from '@utils/utils';
-import { THEME } from '@constants/theme';
+import { THEME } from './theme';
 
 export default function Cell({
     // 坐标
@@ -59,9 +59,33 @@ export default function Cell({
     // 根据格子content确定样式和显示内容
     // ═══════════════════════════════════════════════════════════════════════════════
 
+    const isLabel = (r === 0 || c === 0 || r === 10 || c === 10);
+
     let content = '';          // 格子内显示的文本（如字母A）
     let cellStyle = THEME.cell;  // 格子的CSS类名
     let interactive = false;
+
+    if (isLabel) {
+        // 坐标轴标签区 (Row 0 or Col 0)
+        if ((r === 0 && c === 0) || r === 10 || c === 10) {
+            // 四个角落：保持空白
+            return <div className="aspect-square w-full" />;
+        }
+
+        // 渲染 1-9 的数字标签（从对面拉过来，两边一致）
+        content = (r === 0 || r === 10) ? c : r;
+        const labelColor = (r === 0 || r === 10) ? "text-amber-900" : "text-emerald-900";
+
+        return (
+            <div className={cn(
+                "aspect-square w-full flex items-center justify-center font-black text-md sm:text-md cursor-default",
+                labelColor
+            )}>
+                {content}
+            </div>
+        );
+    }
+
     if (!isGameOver) {
         if (isSetupPhase) {
             // 在战前准备阶段，所有带字母的空格都允许点击

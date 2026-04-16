@@ -15,9 +15,9 @@ const {
     TREASURE_HUNT_LETTERS: LETTERS,        // 8个宝藏字母格（藏宝点和出发点位置）
     TREASURE_HUNT_PERMANENT_X: PERMANENT_X, // 12个永久障碍
     TREASURE_HUNT_COLORS: COLORS           // 玩家棋子颜色
-} = require('./constants');
+} = require('../shared/constants');
 
-const { isOutOfBounds } = require('./validator');
+const { isOutOfBounds } = require('../shared/validator');
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // TreasureHunt 游戏引擎类
@@ -32,8 +32,19 @@ class TreasureHunt {
     // 返回值：游戏状态对象(gameState)，包含棋盘、玩家、阶段等信息
     // ═══════════════════════════════════════════════════════════════════════════════════
     initializeGame(players) {
-        // 步骤1：创建空白9×9棋盘，每个格子初始化为空字符串
+        // 步骤1：创建空白 11×11 棋盘，每个格子初始化为空字符串
         const board = Array(SIZE).fill(null).map(() => Array(SIZE).fill(''));
+
+        // 步骤1.5：填入坐标轴标签 (1-9) - 在四条边缘都生成标签，确保对称
+        for (let i = 1; i <= 9; i++) {
+            // 顶部与底部列标
+            board[0][i] = i.toString();
+            board[10][i] = i.toString();
+
+            // 左侧与右侧行标
+            board[i][0] = i.toString();
+            board[i][10] = i.toString();
+        }
 
         // 步骤2：在棋盘上放置永久障碍X（地图生成）
         PERMANENT_X.forEach(pos => board[pos.r][pos.c] = 'X'); // 填黑大障碍
@@ -67,7 +78,7 @@ class TreasureHunt {
 
         // 步骤5：返回初始游戏状态对象
         return {
-            board: board,                                      // 9×9棋盘（包含永久障碍X、字母A-H）
+            board: board,                                      // 11×11棋盘（包含永久障碍X、字母A-H、四周坐标标号）
             players: gamePlayers,                              // 所有玩家的信息
             phase: 'SETUP_POSITIONS',                          // 游戏阶段：现在是"配置位置"阶段
             playerConfigCount: {},                             // 追踪每个玩家的配置进度：{socketId: 0|1|2}
@@ -529,7 +540,7 @@ class TreasureHunt {
             // 惩罚：跳过移动权利，直接轮给下一个玩家放障碍
             gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
             gameState.phase = 'PLACE_X';
-            gameState.message = `${currentPlayer.name} 试图封死活路触发了天谴，他前进的权利被夺走了！现在请 ${gameState.players[gameState.turnIndex].name} 行动。`;
+            gameState.message = `${currentPlayer.name} 试图封死 (${r},${c}) 触发了天谴，他前进的权利被夺走了！现在请 ${gameState.players[gameState.turnIndex].name} 行动。`;
             return { success: true };
         }
 
@@ -594,7 +605,7 @@ class TreasureHunt {
 
             if (!isDeadlocked) {
                 // 【胜利条件1】常规致胜：到达宝藏点
-                gameState.message = `🎉🎉 恭喜 ${winner.name} 跨过山和大海，率先抵达 ${winner.targetName} 宝库拔冠！`;
+                gameState.message = `🎉🎉 恭喜 ${winner.name} 率先抵达 ${winner.targetName} ，成功找到 One Piece！`;
             } else {
                 // 【胜利条件2】死锁清算：按最短路径判胜
                 const distances = gameState.players.map(p => ({

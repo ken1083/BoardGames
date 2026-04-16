@@ -18,6 +18,7 @@
  */
 
 import { useState } from 'react';
+import { DialogProvider } from './core/contexts/DialogContext';
 
 // 导入4个主要页面组件
 import Lobby from './pages/Lobby';           // 游戏列表页面
@@ -83,13 +84,19 @@ function App() {
   };
 
   /**
-   * 处理返回大厅事件（来自Game组件）
-   * 清空状态并返回 HOME_LOBBY 视图
+   * 处理返回大厅事件（软离开：保留在后台）
    */
   const handleBackToLobby = () => {
+    setCurrentView('HOME_LOBBY');
+  };
+
+  /**
+   * 处理彻底离开房间并返回游戏菜单
+   */
+  const handleLeaveRoom = () => {
     setRoomData(null);
     setGameState(null);
-    setCurrentView('HOME_LOBBY');
+    setCurrentView('GAME_MENU');
   };
 
   /**
@@ -117,7 +124,7 @@ function App() {
   // 条件渲染：根据currentView显示不同的页面
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
-    <>
+    <DialogProvider>
       {/* 视图1: HOME_LOBBY - 游戏列表页面 */}
       {currentView === 'HOME_LOBBY' && (
         <Lobby onSelectGame={handleSelectGame} />
@@ -127,6 +134,7 @@ function App() {
       {currentView === 'GAME_MENU' && (
         <GameMenu
           gameDef={selectedGame}                    // 传入选中的游戏
+          activeRoomData={roomData}                 // 传入存在的活动房间
           onJoined={handleJoinedRoom}               // 加入房间成功的回调
           onBack={handleBackToLobby}                // 返回按钮的回调
         />
@@ -138,7 +146,8 @@ function App() {
           gameDef={selectedGame}                    // 游戏定义
           initialRoomData={roomData}                // 房间信息
           onGameReady={handleGameReady}             // 游戏启动时的回调
-          onBackToLobby={handleBackToLobby}         // 离开房间回到大厅
+          onBackToLobby={handleBackToLobby}         // 暂时挂起回大厅
+          onLeaveRoom={handleLeaveRoom}             // 彻底退出房间
           onBackToGameMenu={handleBackToGameMenu}   // 离开房间回到游戏菜单
         />
       )}
@@ -153,8 +162,9 @@ function App() {
           onBackToRoom={handleBackToRoom}           // 游戏结束返回房间
         />
       )}
-    </>
+    </DialogProvider>
   );
 }
+
 
 export default App;

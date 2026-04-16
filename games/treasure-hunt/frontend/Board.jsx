@@ -26,8 +26,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { socket } from '@services/socket';
 import { cn } from '@utils/utils';
-import { THEME } from '@constants/theme';
-import { Trophy, AlertTriangle, Info, Home, XCircle, Send, MessageSquare, LogOut } from 'lucide-react';
+import { THEME } from './theme';
+import { Trophy, AlertTriangle, Info, Home, XCircle, Send, MessageSquare, LogOut, RotateCcw } from 'lucide-react';
+import { useDialog } from '../../../platform/web/src/core/contexts/DialogContext';
 import Cell from './Cell';
 
 export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGameState, onBackToLobby, onBackToRoom }) {
@@ -39,6 +40,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
      * 游戏状态
      * 包含：board、players、phase、turnIndex、winner、playerConfigCount、message等
      */
+    const { showToast, confirm } = useDialog();
     const [gameState, setGameState] = useState(initialGameState);
 
     /**
@@ -57,11 +59,9 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
     const [chatInput, setChatInput] = useState('');
 
     /**
-     * 聊天窗口的底部ref，用于自动滚动到最新消息
-     * useRef创建的ref不会在re-render时改变引用
-     * 用途：DOM操作（滚动）、获取input焦点等
+     * 聊天窗口的容器ref，用于自动滚动到最新消息
      */
-    const chatEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // Socket事件监听（useEffect）
@@ -92,12 +92,22 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
          * msgObj：{ playerName, message, timestamp }
          */
         const handleChat = (msgObj) => {
-            // 在chatLog末尾添加新消息
             setChatLog(prev => [...prev, msgObj]);
-            // 更新DOM后（100ms延迟）自动滚动到底部
+            // 使用 direct scroll 替代 scrollIntoView 以防止浏览器窗口跳转
             setTimeout(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (chatContainerRef.current) {
+                    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                }
             }, 100);
+        };
+
+        /**
+         * GAME_STARTED：服务器派发游戏重开
+         */
+        const handleGameRestart = ({ gameState: newState }) => {
+            setGameState(newState);
+            setInGameSelection(null);   // 清空当前预选
+            setErrorMsg('');            // 清空错误信息
         };
 
         /**
@@ -113,6 +123,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
 
         // 注册所有socket事件监听器
         socket.on('GAME_STATE_UPDATED', handleUpdate);
+        socket.on('GAME_STARTED', handleGameRestart);
         socket.on('GAME_ERROR', handleError);
         socket.on('NEW_CHAT_MESSAGE', handleChat);
         socket.on('FORCE_BACK_TO_ROOM', handleForceBack);
@@ -120,6 +131,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
         // cleanup函数：组件卸载时移除监听，防止内存泄漏
         return () => {
             socket.off('GAME_STATE_UPDATED', handleUpdate);
+            socket.off('GAME_STARTED', handleGameRestart);
             socket.off('GAME_ERROR', handleError);
             socket.off('NEW_CHAT_MESSAGE', handleChat);
             socket.off('FORCE_BACK_TO_ROOM', handleForceBack);
@@ -145,7 +157,9 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                 }];
             });
             setTimeout(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (chatContainerRef.current) {
+                    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                }
             }, 100);
         }
     }, [gameState?.message]);
@@ -276,10 +290,20 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
      * 处理游戏结束（房主权限）
      * 强制结束游戏并让所有玩家返回房间
      */
-    const handleEndGame = () => {
+    const handleEndGame = async () => {
         // 确认对话框：防止误点
-        if (window.confirm("确定要终止游戏吗？")) {
+        if (await confirm("确定要终止游戏吗？")) {
             socket.emit('END_GAME');
+        }
+    };
+
+    /**
+     * 处理重开游戏（房主权限）
+     * 即刻重置游戏状态并开始新的一局
+     */
+    const handleRestartGame = async () => {
+        if (await confirm("确定要重开吗？当前游戏进度将丢失。")) {
+            socket.emit('RESTART_GAME');
         }
     };
 
@@ -319,37 +343,24 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* 返回房间按钮 */}
-                    <button
-                        onClick={() => {
-                            if (window.confirm("确定要离开游戏返回房间大厅吗？(游戏将在后台继续)")) {
-                                if (onBackToRoom) {
-                                    onBackToRoom(initialRoomData);
-                                } else {
-                                    onBackToLobby();
-                                }
-                            }
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl font-bold text-sm transition-colors border border-blue-200"
-                        title="返回房间大厅"
-                    >
-                        <LogOut size={16} /> <span className="hidden sm:inline">回到房间</span>
-                    </button>
-
-                    {/* 终止游戏 */}
+                    {/* 重开一局 / 终止游戏 */}
                     {isHost && (
-                        <button onClick={handleEndGame} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors border border-red-200">
-                            <XCircle size={16} /> <span className="hidden sm:inline">终止游戏</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={handleRestartGame} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl font-bold text-sm transition-colors border border-emerald-200">
+                                <RotateCcw size={16} /> <span className="hidden sm:inline">重开一局</span>
+                            </button>
+                            <button onClick={handleEndGame} className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors border border-red-200">
+                                <XCircle size={16} /> <span className="hidden sm:inline">终止游戏</span>
+                            </button>
+                        </div>
                     )}
 
                     {/* 回到大厅 */}
-                    <button onClick={() => {
-                        if (window.confirm("确定要彻底退出游戏回到大厅吗？")) {
-                            socket.emit('LEAVE_ROOM');
+                    <button onClick={async () => {
+                        if (await confirm("确定要回到大厅吗？（游戏不会停止）")) {
                             onBackToLobby();
                         }
-                    }} className="p-2 text-[#a89574] hover:text-[#5D4037] transition-colors bg-[#f4ebd8] rounded-xl border border-[#e3d7c1]">
+                    }} className="p-2 text-[#a89574] hover:text-[#5D4037] transition-colors bg-[#f4ebd8] rounded-xl border border-[#e3d7c1]" title="返回大厅">
                         <Home size={22} />
                     </button>
                 </div>
@@ -367,9 +378,13 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                         ) : isSetupPhase ? (
                             <div className="text-sm font-bold text-neutral-500 bg-white px-6 py-2 rounded-xl shadow-sm border border-neutral-100">
                                 {(() => {
+                                    const myIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                    const targetPlayer = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
+                                    const targetName = targetPlayer ? targetPlayer.name : '未知玩家';
+
                                     const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
-                                    if (myConfig === 0) return "👉 请点击棋盘上的字母格预选【藏宝点】";
-                                    if (myConfig === 1) return "👉 请点击另一个字母格预选【出发点】";
+                                    if (myConfig === 0) return `👉 请点击棋盘上的字母格预选 ${targetName} 【藏宝点】`;
+                                    if (myConfig === 1) return `👉 请点击另一个字母格预选 ${targetName} 【出发点】`;
                                     return "等待其他玩家完成配置...";
                                 })()}
                             </div>
@@ -381,7 +396,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                     </div>
 
                     <div className="w-full max-w-[700px] aspect-square flex justify-center border-box">
-                        <div className={`w-full h-full aspect-square grid grid-cols-9 gap-[2px] sm:gap-[3px] p-2 sm:p-4 overflow-hidden rounded-2xl sm:rounded-3xl ${THEME.boardSpace} shadow-inner`}>
+                        <div className={`w-full h-full aspect-square grid grid-cols-11 gap-[2px] sm:gap-[3px] p-2 sm:p-0 overflow-hidden rounded-2xl sm:rounded-3xl ${THEME.boardSpace} shadow-inner`}>
                             {(() => {
                                 const myIdx = gameState.players.findIndex(p => p.id === socket.id);
                                 const playerIConfigured = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
@@ -433,9 +448,13 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                     <div className="mt-1 text-junior space-y-3">
                                         <p>
                                             {(() => {
+                                                const myIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                                const targetPlayer = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
+                                                const targetName = targetPlayer ? targetPlayer.name : '玩家';
+
                                                 const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
-                                                if (myConfig === 0) return "👉 预选【藏宝点】";
-                                                if (myConfig === 1) return "👉 预选【出发点】";
+                                                if (myConfig === 0) return `👉 请为 ${targetName} 预选【藏宝点】`;
+                                                if (myConfig === 1) return `👉 请为 ${targetName} 预选【出发点】`;
                                                 if (myConfig == 2) return "✅ 已完成，等待其他玩家...";
                                                 else return "❌ 异常状态：myConfig=" + myConfig;
                                             })()}
@@ -452,7 +471,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                                         const pIdx = gameState.players.findIndex(p => p.id === socket.id);
                                                         const targetName = gameState.players[(pIdx + 1) % gameState.players.length].name;
                                                         const typeName = myConfig === 0 ? "藏宝点" : "出发点";
-                                                        alert(`请选择一个字母格作为 ${targetName} 的${typeName}！`);
+                                                        showToast(`请选择一个字母格作为 ${targetName} 的${typeName}！`, "warning");
                                                         return;
                                                     }
 
@@ -557,7 +576,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                         <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <MessageSquare size={14} /> 通讯频道
                         </h3>
-                        <div className="flex-1 overflow-y-auto mb-3 space-y-3 pr-2">
+                        <div className="flex-1 overflow-y-auto mb-3 space-y-3 pr-2" ref={chatContainerRef}>
                             {chatLog.length === 0 && (
                                 <div className="h-full flex items-center justify-center text-xs text-neutral-300 text-center">
                                     暂无通讯
@@ -578,7 +597,6 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                     )}
                                 </div>
                             ))}
-                            <div ref={chatEndRef} />
                         </div>
                         <form onSubmit={sendChat} className="flex gap-2">
                             <input

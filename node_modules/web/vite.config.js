@@ -19,10 +19,11 @@ export default defineConfig({
     alias: {
       // 配置路径别名，简化导入语句
       '@': path.resolve(__dirname, './src'),
-      '@services': path.resolve(__dirname, './src/services'),
+      '@services': path.resolve(__dirname, './src/core/services'),
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@utils': path.resolve(__dirname, './src/lib'),
       '@constants': path.resolve(__dirname, './src/constants'),
+      '@core': path.resolve(__dirname, './src/core'),
       '@shared': path.resolve(__dirname, '../../shared'),
       '@games': path.resolve(__dirname, '../../games'),
       // ====== 核心修复：依赖劫持 ======

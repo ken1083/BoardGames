@@ -15,7 +15,8 @@ const {
  * 检查坐标是否在棋盘范围内
  */
 function isOutOfBounds(r, c) {
-    return r < 0 || r >= SIZE || c < 0 || c >= SIZE;
+    // 互动区域严格限制在 [1, 9] 范围内 (11x11 symmetric grid)
+    return r < 1 || r > 9 || c < 1 || c > 9;
 }
 
 /**

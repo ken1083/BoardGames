@@ -1,5 +1,5 @@
 import treasureHuntSpec from '../games/treasure-hunt/gameSpec.json' with { type: 'json' };
-import { rules as treasureHuntRules } from '../games/treasure-hunt/rules.js';
+import { rules as treasureHuntRules } from '../games/treasure-hunt/shared/rules.js';
 
 export const GAME_REGISTRY = [
     {

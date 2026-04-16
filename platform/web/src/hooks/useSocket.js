@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { socket } from '../services/socket';
+import { socket } from '../core/services/socket';
 
 export function useSocket() {
     const [isConnected, setIsConnected] = useState(socket.connected);

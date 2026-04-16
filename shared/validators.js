@@ -5,9 +5,10 @@
 
 /**
  * 验证房间ID格式
+ * 要求：恰好4个字符，仅包含大写字母和数字 [A-Z0-9]
  */
 export function isValidRoomId(roomId) {
-    return /^[A-Z0-9]{3,4}$/.test(roomId);
+    return /^[A-Z0-9]{4}$/.test(roomId);
 }
 
 /**

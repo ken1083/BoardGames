@@ -47,11 +47,13 @@ class RoomManager {
             return { room, isNew: true };
         }
 
+        const existingPlayer = room.players.find(p => p.socketId === socketId);
+        if (existingPlayer) {
+            return { room, isNew: false };
+        }
+
         if (room.status !== 'lobby') return { error: '❌ 这个房间的游戏早就开始了，不可硬闯！' };
         if (room.players.length >= room.settings.maxPlayers) return { error: '❌ 房间已满（可在房主设置提高人数上限）' };
-
-        const existingPlayer = room.players.find(p => p.socketId === socketId);
-        if (existingPlayer) return { error: '❌ 你这台设备已经在这个房间里了。' };
 
         // 重名处理
         let finalName = playerName.substring(0, 15);
@@ -104,5 +106,27 @@ class RoomManager {
 
         return { destroyed: false, room };
     }
+    // 玩家排序逻辑 (仅房主)
+    reorderPlayers(roomId, socketId, playerSocketId, direction) {
+        const room = this.rooms.get(roomId);
+        if (!room) return false;
+        if (room.hostId !== socketId) return false; // 严防篡权
+        if (room.status !== 'lobby') return false; // 游戏中不可重排
+
+        const idx = room.players.findIndex(p => p.socketId === playerSocketId);
+        if (idx === -1) return false;
+
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= room.players.length) return false;
+
+        // 交换位置
+        const temp = room.players[idx];
+        room.players[idx] = room.players[newIdx];
+        room.players[newIdx] = temp;
+
+        return true;
+    }
 }
+
 module.exports = new RoomManager();
+
