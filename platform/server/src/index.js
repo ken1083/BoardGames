@@ -21,6 +21,9 @@ const roomManager = require('./core/RoomManager');
 // 导入游戏分发器：根据游戏类型路由到相应的游戏引擎
 const gameDispatcher = require('./core/GameDispatcher');
 
+// 导入验证器：验证房间ID格式等
+const { isValidRoomId } = require('../../../shared/validators');
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // 初始化 Express 和 Socket.io 服务器
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -82,6 +85,12 @@ io.on('connection', (socket) => {
         }
 
         // 【加入现有房间】
+        // 验证房间ID格式
+        if (!isValidRoomId(roomId)) {
+            if (callback) callback({ success: false, error: '❌ 房间号必须是4个字符，仅能包含字母和数字 (A-Z, 0-9)' });
+            return;
+        }
+
         const result = roomManager.joinRoom(roomId, socket.id, playerName, gameType);
         if (result.error) {
             // 加入失败(房间已满、房间未找到等)
@@ -121,6 +130,17 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('ROOM_UPDATED', roomManager.getRoom(roomId));
         }
     });
+
+    // ═════════════════════════════════════════════════════════════════════════════════
+    // 【事件】REORDER_PLAYERS - 房主修改玩家顺序
+    // ═════════════════════════════════════════════════════════════════════════════════
+    socket.on('REORDER_PLAYERS', ({ playerSocketId, direction }) => {
+        const roomId = socketToRoom.get(socket.id);
+        if (roomManager.reorderPlayers(roomId, socket.id, playerSocketId, direction)) {
+            io.to(roomId).emit('ROOM_UPDATED', roomManager.getRoom(roomId));
+        }
+    });
+
 
     // ═════════════════════════════════════════════════════════════════════════════════
     // 【事件】START_GAME - 房主启动游戏
