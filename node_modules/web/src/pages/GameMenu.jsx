@@ -16,12 +16,29 @@
  */
 
 import { useState } from 'react';
+import { useRoom } from '../core/contexts/RoomContext';
 import { socket } from '../core/services/socket';
 import { cn } from '../lib/utils';
-import { User, Hash, ArrowLeft, BookOpen, Info } from 'lucide-react';
+import { User, Hash, ArrowLeft, BookOpen, Info, ArrowRight } from 'lucide-react';
 import { isValidRoomId } from '../../../../shared/validators';
 
-export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) {
+import { getEnabledGames } from '@shared/game-registry';
+import { useParams, useNavigate } from 'react-router-dom';
+
+export default function GameMenu() {
+    const { gameId } = useParams();
+    const navigate = useNavigate();
+    const gameDef = getEnabledGames().find(g => g.id === gameId);
+
+    // Redirect to home if game is not found
+    if (!gameDef) {
+        navigate('/');
+        return null;
+    }
+
+    const { getActiveRoomByGame, updateActiveRoom } = useRoom();
+    const activeRoomData = getActiveRoomByGame(gameId);
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // 状态管理：表单输入和加载状态
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -95,7 +112,9 @@ export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) 
 
                 // 如果成功，调用父组件(App.jsx)传来的onJoined回调
                 if (res.success) {
-                    onJoined(res.room);
+                    // 更新全局房间上下文
+                    updateActiveRoom(res.room);
+                    navigate(`/${gameId}/${res.room.id}`);
                 } else {
                     // 否则显示错误消息
                     setError(res.error || 'Failed to join room');
@@ -117,7 +136,7 @@ export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) 
             <div className="w-full md:w-1/3 bg-white px-14 py-12 flex flex-col border-r border-neutral-100 overflow-y-auto">
                 {/* 返回按钮：调用父组件(App.jsx)传来的onBack回调 */}
                 <button
-                    onClick={onBack}
+                    onClick={() => navigate('/')}
                     className="flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-neutral-900 transition-colors self-start mb-12"
                 >
                     <ArrowLeft size={16} />
@@ -212,9 +231,21 @@ export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) 
 
                         {/* 活动房间提醒 */}
                         {activeRoomData && activeRoomData.gameType === gameDef.id && (
-                            <div className="mt-2 p-3 bg-blue-50 text-blue-700 text-sm font-semibold rounded-xl flex items-center gap-2 border border-blue-100">
-                                <Info className="shrink-0" size={16} />
-                                <span>你有一个进行中的房间 (Room {activeRoomData.id})</span>
+                            <div className="mt-2 p-3 bg-blue-50 text-blue-700 text-sm font-semibold rounded-xl flex items-center justify-between gap-2 border border-blue-100">
+                                <div className="flex items-center gap-2">
+                                    <Info className="shrink-0" size={16} />
+                                    <span>你有一个进行中的房间 (Room {activeRoomData.id})</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate(`/${gameId}/${activeRoomData.id}`);
+                                    }}
+                                    className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs hover:bg-blue-700 transition-colors"
+                                >
+                                    <ArrowRight size={18} />
+                                </button>
                             </div>
                         )}
                     </div>

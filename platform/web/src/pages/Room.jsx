@@ -19,18 +19,26 @@ import { useState, useEffect } from 'react';
 import { socket } from '../core/services/socket';
 import { cn } from '../lib/utils';
 import { Crown, Users, Settings, Play, Pencil, Home, LogOut, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getEnabledGames } from '@shared/game-registry';
 import { useDialog } from '../core/contexts/DialogContext';
+import { useIdentity } from '@hooks/useIdentity';
+import { useRoom } from '../core/contexts/RoomContext';
 
-export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLobby, onLeaveRoom, onBackToGameMenu }) {
+export default function Room() {
+    const { gameId, roomId } = useParams();
+    const navigate = useNavigate();
+    const { removeActiveRoom, updateActiveRoom } = useRoom();
+    const gameDef = getEnabledGames().find(g => g.id === gameId);
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // 状态管理
     // ═══════════════════════════════════════════════════════════════════════════════
 
     /**
-     * 房间数据：包含players数组、settings等
-     * 初始值来自App.jsx传来的initialRoomData
+     * 房间数据：从服务器通过 REJOIN_ROOM 获取
      */
-    const [room, setRoom] = useState(initialRoomData);
+    const [room, setRoom] = useState(null);
     const { showToast } = useDialog();
 
     /**
@@ -54,30 +62,62 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
     // ═══════════════════════════════════════════════════════════════════════════════
 
     useEffect(() => {
-        // Socket事件处理函数1：房间信息更新
-        const handleRoomUpdated = (updatedRoom) => setRoom(updatedRoom);
+        // 规范化房间 ID
+        const normalizedRoomId = roomId?.trim().toUpperCase();
+        if (!normalizedRoomId) return;
 
-        // Socket事件处理函数2：游戏启动通知
-        const handleGameStarted = (data) => onGameReady(data.gameState);
+        // 如果断开连接则连接
+        if (!socket.connected) socket.connect();
 
-        // 服务器发送'ROOM_UPDATED'事件时，调用handleRoomUpdated处理
+        // 尝试重连到房间
+        socket.emit('REJOIN_ROOM', { roomId: normalizedRoomId });
+
+        const handleRoomUpdated = (updatedRoom) => {
+            if (updatedRoom.id === normalizedRoomId) {
+                setRoom(updatedRoom);
+                updateActiveRoom(updatedRoom);
+            }
+        };
+
+        const handleActiveRooms = (rooms) => {
+            const currentRoom = rooms.find(r => r.id === normalizedRoomId);
+            if (currentRoom) {
+                setRoom(currentRoom);
+                updateActiveRoom(currentRoom);
+            }
+        };
+
+        const handleGameStarted = (data) => {
+            // 只有当收到的房间 ID 与当前页面一致时才跳转
+            const targetRoomId = data.room?.id || data.roomId || data.id;
+            if (targetRoomId === normalizedRoomId) {
+                navigate(`/${gameId}/${normalizedRoomId}/play`, { state: { gameState: data.gameState, room: data.room || room } });
+            }
+        };
+
+        const handleRejoinFailed = () => {
+            showToast("房间不存在或您不在该房间中", "error");
+            navigate(`/${gameId}`);
+        };
+
         socket.on('ROOM_UPDATED', handleRoomUpdated);
-
-        // 服务器发送'GAME_STARTED'事件时，调用handleGameStarted处理
+        socket.on('ACTIVE_ROOMS_INFO', handleActiveRooms);
         socket.on('GAME_STARTED', handleGameStarted);
+        socket.on('REJOIN_FAILED', handleRejoinFailed);
 
         return () => {
-            // 移除事件监听器
             socket.off('ROOM_UPDATED', handleRoomUpdated);
+            socket.off('ACTIVE_ROOMS_INFO', handleActiveRooms);
             socket.off('GAME_STARTED', handleGameStarted);
+            socket.off('REJOIN_FAILED', handleRejoinFailed);
         };
-    }, [onGameReady]);
+    }, [roomId, gameId, navigate, showToast, updateActiveRoom]);
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 辅助状态计算
     // ═══════════════════════════════════════════════════════════════════════════════
-
-    const isMeHost = room.hostId === socket.id;
+    const myPlayerId = useIdentity();
+    const isMeHost = room?.hostId === myPlayerId;
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // 事件处理函数
@@ -111,15 +151,28 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
     };
 
     const handleLeaveToLobby = () => {
-        // Soft leave: don't tell the server to abandon the room
-        onBackToLobby();
+        // Soft leave
+        navigate('/');
     };
 
     const handleHardLeaveRoom = () => {
         // Hard leave
         socket.emit('LEAVE_ROOM');
-        if (onLeaveRoom) onLeaveRoom();
+        removeActiveRoom(roomId);
+        navigate(`/${gameId}`);
     };
+
+    // 如果还没有房间数据，显示加载状态
+    if (!room) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-neutral-100">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-neutral-600 font-medium">正在进入房间...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-neutral-100 p-4 sm:p-6 md:p-12 font-sans">
@@ -180,7 +233,7 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                             <ul className="space-y-3">
                                 {room.players.map((p, idx) => {
                                     // 判断当前遍历的玩家是否是自己
-                                    const isMe = p.socketId === socket.id;
+                                    const isMe = p.playerId === myPlayerId;
 
                                     return (
                                         // 每个玩家卡片
@@ -199,14 +252,14 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                                     <div className="flex flex-col gap-0.5">
                                                         <button
                                                             disabled={idx === 0}
-                                                            onClick={() => handleReorder(p.socketId, -1)}
+                                                            onClick={() => handleReorder(p.playerId, -1)}
                                                             className="p-0.5 text-neutral-400 hover:text-blue-600 disabled:opacity-20 transition-colors"
                                                         >
                                                             <ChevronUp size={16} />
                                                         </button>
                                                         <button
                                                             disabled={idx === room.players.length - 1}
-                                                            onClick={() => handleReorder(p.socketId, 1)}
+                                                            onClick={() => handleReorder(p.playerId, 1)}
                                                             className="p-0.5 text-neutral-400 hover:text-blue-600 disabled:opacity-20 transition-colors"
                                                         >
                                                             <ChevronDown size={16} />
@@ -324,12 +377,20 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                 <p className="text-xs text-neutral-500 mb-2">房间内的实际玩家数必须与设定值相同</p>
                                 <select
                                     disabled={!isMeHost}  // 只有主持人可以修改
-                                    value={room.settings.maxPlayers || 2}
+                                    value={room.settings.maxPlayers}
                                     onChange={(e) => changeMaxPlayers(e.target.value)}
                                     className="w-full bg-neutral-50 px-4 py-3 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium appearance-none disabled:opacity-60"
                                 >
-                                    <option value={2}>2 Players</option>
-                                    <option value={3}>3 Players</option>
+                                    {/* 动态根据 gameSpec.json 生成可选人数范围 */}
+                                    {(() => {
+                                        const min = gameDef?.gamePlay?.minPlayers || 2;
+                                        const max = gameDef?.gamePlay?.maxPlayers || 2;
+                                        const options = [];
+                                        for (let i = min; i <= max; i++) {
+                                            options.push(<option key={i} value={i}>{i} Players</option>);
+                                        }
+                                        return options;
+                                    })()}
                                 </select>
                             </div>
 
@@ -349,8 +410,7 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                                 {room.status === 'playing' ? (
                                     <button
                                         onClick={() => {
-                                            socket.emit('PLAYER_REJOINED');
-                                            onGameReady(room.gameState);
+                                            navigate(`/${gameId}/${roomId}/play`, { state: { gameState: room.gameState, room } });
                                         }}
                                         className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 animate-pulse"
                                     >

@@ -4,5 +4,13 @@
   "workspaces": [
     "platform/web",
     "platform/server"
-  ]
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace platform/web\" \"npm run dev --workspace platform/server\"",
+    "dev:lan": "concurrently \"npm run dev --workspace platform/web -- --host\" \"npm run dev --workspace platform/server\"",
+    "start:lan": "npm run build --workspace platform/web && node platform/server/src/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }

@@ -1,6 +1,9 @@
 import treasureHuntSpec from '../games/treasure-hunt/gameSpec.json' with { type: 'json' };
 import { rules as treasureHuntRules } from '../games/treasure-hunt/shared/rules.js';
 
+import battleLineSpec from '../games/battle-line/gameSpec.json' with { type: 'json' };
+import { rules as battleLineRules } from '../games/battle-line/shared/rules.js';
+
 export const GAME_REGISTRY = [
     {
         // 展开基础信息与参数
@@ -14,8 +17,13 @@ export const GAME_REGISTRY = [
         frontend: {
             componentPath: () => import('../games/treasure-hunt/frontend/index.js')
         },
-        
+
         rules: treasureHuntRules
+    },
+    {
+        ...battleLineSpec,
+        enabled: true,
+        rules: battleLineRules
     }
 ];
 

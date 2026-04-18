@@ -18,31 +18,16 @@
  */
 
 import { cn } from '@utils/utils';
-import { getEnabledGames } from '@shared/game-registry';
+import { getEnabledGames, GAME_REGISTRY } from '@shared/game-registry';
 import { Gamepad2, ArrowRight, Lock, LucideDoorOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Lobby({ onSelectGame }) {
+export default function Lobby() {
+    const navigate = useNavigate();
     // 从 game-registry 动态获取已启用的游戏列表
-    const games = getEnabledGames();
-
-    // 获取所有游戏（包括禁用的）用于显示禁用状态
-    const allGames = [
-        {
-            id: 'treasure_hunt',
-            name_ch: '寻宝之战',
-            name_en: 'Treasure Hunt',
-            description: '2-3人回合制棋盘策略游戏',
-            icon: '👑'
-        },
-        {
-            id: 'battle_line',
-            name_ch: '战线',
-            name_en: 'Battle Line',
-            description: '2-4人卡牌对战游戏',
-            icon: '⚔️',
-            disabled: true
-        }
-    ];
+    const enabledGames = getEnabledGames();
+    // 获取注册表中的所有游戏
+    const allGames = GAME_REGISTRY;
 
     return (
         <div className="flex flex-col min-h-screen bg-neutral-100 p-4 sm:p-8 font-sans">
@@ -59,23 +44,14 @@ export default function Lobby({ onSelectGame }) {
                 {/* 游戏卡片网格 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {allGames.map((game) => {
-                        const isEnabled = games.some(g => g.id === game.id);
+                        const isEnabled = enabledGames.some(g => g.id === game.id);
 
                         return (
                             <div
                                 key={game.id}
                                 onClick={() => {
                                     if (isEnabled) {
-                                        const fullGameObj = games.find(g => g.id === game.id);
-                                        if (fullGameObj) {
-                                            const mergedGameObj = {
-                                                ...fullGameObj,
-                                                name_ch: game.name_ch,
-                                                name_en: game.name_en,
-                                                icon: game.icon
-                                            };
-                                            onSelectGame(mergedGameObj);
-                                        }
+                                        navigate(`/${game.id}`);
                                     }
                                 }}
                                 className={cn(

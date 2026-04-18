@@ -24,14 +24,17 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { socket } from '@services/socket';
 import { cn } from '@utils/utils';
 import { THEME } from './theme';
 import { Trophy, AlertTriangle, Info, Home, XCircle, Send, MessageSquare, LogOut, RotateCcw } from 'lucide-react';
+import { useIdentity } from '../../../platform/web/src/hooks/useIdentity'
 import { useDialog } from '../../../platform/web/src/core/contexts/DialogContext';
 import Cell from './Cell';
 
 export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGameState, onBackToLobby, onBackToRoom }) {
+    const { roomId } = useParams();
     // ═══════════════════════════════════════════════════════════════════════════════
     // 状态管理
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -41,6 +44,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
      * 包含：board、players、phase、turnIndex、winner、playerConfigCount、message等
      */
     const { showToast, confirm } = useDialog();
+    const playerId = useIdentity();
     const [gameState, setGameState] = useState(initialGameState);
 
     /**
@@ -73,6 +77,9 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
          * 每当有玩家操作时都会触发，用于实时同步所有客户端的游戏状态
          */
         const handleUpdate = (state) => {
+            // 校验房间 ID，防止旧房间消息干扰
+            if (state.roomId && state.roomId !== roomId) return;
+
             setGameState(state);
             setErrorMsg('');  // 新状态到达时清除旧错误消息
         };
@@ -104,7 +111,9 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
         /**
          * GAME_STARTED：服务器派发游戏重开
          */
-        const handleGameRestart = ({ gameState: newState }) => {
+        const handleGameRestart = ({ gameState: newState, roomId: incomingRoomId }) => {
+            if (incomingRoomId && incomingRoomId !== roomId) return;
+
             setGameState(newState);
             setInGameSelection(null);   // 清空当前预选
             setErrorMsg('');            // 清空错误信息
@@ -114,6 +123,8 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
          * FORCE_BACK_TO_ROOM：游戏被强制终止（如房主结束游戏）
          */
         const handleForceBack = (room) => {
+            if (room && room.id !== roomId) return;
+
             if (onBackToRoom) {
                 onBackToRoom(room);
             } else {
@@ -222,16 +233,15 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
         : null;
 
     /**
-     * 判断是否是自己的回合
-     * 条件：非战前准备阶段 且 currentPlayer的ID等于当前socket.id
+     * 条件渲染：非战前准备阶段 且 currentPlayer的ID等于当前 playerId
      */
-    const isMyTurn = !isSetupPhase && currentPlayer && currentPlayer.id === socket.id;
+    const isMyTurn = !isSetupPhase && currentPlayer && currentPlayer.id === playerId;
 
     /**
      * 判断是否是房间主持人
      * 只有主持人有权强制终止游戏
      */
-    const isHost = initialRoomData?.hostId === socket.id;
+    const isHost = initialRoomData?.hostId === playerId;
 
     /**
      * inGameSelection：记录玩家在游戏进行阶段预选的格子
@@ -378,11 +388,11 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                         ) : isSetupPhase ? (
                             <div className="text-sm font-bold text-neutral-500 bg-white px-6 py-2 rounded-xl shadow-sm border border-neutral-100">
                                 {(() => {
-                                    const myIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                    const myIdx = gameState.players.findIndex(p => p.id === playerId);
                                     const targetPlayer = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
                                     const targetName = targetPlayer ? targetPlayer.name : '未知玩家';
 
-                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
+                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[playerId]) ?? 0;
                                     if (myConfig === 0) return `👉 请点击棋盘上的字母格预选 ${targetName} 的藏宝点`;
                                     if (myConfig === 1) return `👉 请点击另一个字母格预选 ${targetName} 的出发点`;
                                     return "等待其他玩家完成配置...";
@@ -398,7 +408,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                     <div className="w-full max-w-[700px] aspect-square flex justify-center border-box">
                         <div className={`w-full h-full aspect-square grid grid-cols-11 gap-[2px] sm:gap-[3px] p-2 sm:p-0 overflow-hidden rounded-2xl sm:rounded-3xl ${THEME.boardSpace} shadow-inner`}>
                             {(() => {
-                                const myIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                const myIdx = gameState.players.findIndex(p => p.id === playerId);
                                 const playerIConfigured = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
                                 const visibleTargetId = playerIConfigured?.id;
 
@@ -413,7 +423,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                             isSetupPhase={isSetupPhase}
                                             isMyTurn={isMyTurn}
                                             isGameOver={!!gameState.winner}
-                                            myTempSelection={isSetupPhase ? (gameState.setupTempSelection && gameState.setupTempSelection[socket.id]) : inGameSelection}
+                                            myTempSelection={isSetupPhase ? (gameState.setupTempSelection && gameState.setupTempSelection[playerId]) : inGameSelection}
                                             visibleTargetId={visibleTargetId}
                                             onClick={handleCellClick}
                                         />
@@ -448,11 +458,11 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                     <div className="mt-1 text-junior space-y-3">
                                         <p>
                                             {(() => {
-                                                const myIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                                const myIdx = gameState.players.findIndex(p => p.id === playerId);
                                                 const targetPlayer = myIdx !== -1 ? gameState.players[(myIdx + 1) % gameState.players.length] : null;
                                                 const targetName = targetPlayer ? targetPlayer.name : '玩家';
 
-                                                const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
+                                                const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[playerId]) ?? 0;
                                                 if (myConfig === 0) return `👉 请为 ${targetName} 预选【藏宝点】`;
                                                 if (myConfig === 1) return `👉 请为 ${targetName} 预选【出发点】`;
                                                 if (myConfig == 2) return "✅ 已完成，等待其他玩家...";
@@ -461,14 +471,14 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                         </p>
 
                                         {/* 只要还没有配置完成，就始终显示确认按钮 */}
-                                        {((gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0) < 2 && (
+                                        {((gameState.playerConfigCount && gameState.playerConfigCount[playerId]) ?? 0) < 2 && (
                                             <button
                                                 onClick={() => {
-                                                    const myTempSel = gameState.setupTempSelection && gameState.setupTempSelection[socket.id];
-                                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
+                                                    const myTempSel = gameState.setupTempSelection && gameState.setupTempSelection[playerId];
+                                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[playerId]) ?? 0;
 
                                                     if (!myTempSel) {
-                                                        const pIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                                        const pIdx = gameState.players.findIndex(p => p.id === playerId);
                                                         const targetName = gameState.players[(pIdx + 1) % gameState.players.length].name;
                                                         const typeName = myConfig === 0 ? "藏宝点" : "出发点";
                                                         showToast(`请选择一个字母格作为 ${targetName} 的${typeName}！`, "warning");
@@ -479,7 +489,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                                 }}
                                                 className={cn(
                                                     "w-full py-2.5 rounded-xl font-bold transition-all shadow-sm text-center block",
-                                                    (gameState.setupTempSelection && gameState.setupTempSelection[socket.id])
+                                                    (gameState.setupTempSelection && gameState.setupTempSelection[playerId])
                                                         ? "bg-green-500 hover:bg-green-600 text-white shadow-[0_4px_14px_rgba(34,197,94,0.39)]"
                                                         : "bg-neutral-200 text-neutral-500 hover:bg-neutral-300"
                                                 )}
@@ -492,10 +502,10 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
 
                                 {/* 战前准备阶段：显示已保存的配置日志 */}
                                 {(() => {
-                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
+                                    const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[playerId]) ?? 0;
                                     if (myConfig === 0) return null;
 
-                                    const pIdx = gameState.players.findIndex(p => p.id === socket.id);
+                                    const pIdx = gameState.players.findIndex(p => p.id === playerId);
                                     if (pIdx === -1) return null;
                                     const targetP = gameState.players[(pIdx + 1) % gameState.players.length];
 
@@ -534,7 +544,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                             <div className="space-y-3">
                                 {gameState.players.map((p, idx) => {
                                     // 游戏中：显示当前轮玩家、所有出发点、自己为下一位选的藏宝点
-                                    const isMyNext = idx === ((gameState.players.findIndex(pl => pl.id === socket.id) + 1) % gameState.players.length);
+                                    const isMyNext = idx === ((gameState.players.findIndex(pl => pl.id === playerId) + 1) % gameState.players.length);
 
                                     return (
                                         <div key={p.id} className={cn(
@@ -546,7 +556,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                             <div className="flex items-center gap-2">
                                                 <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: p.color }}></div>
                                                 <span className="font-bold text-sm text-neutral-800 truncate">{p.name}</span>
-                                                {p.id === socket.id && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">You</span>}
+                                                {p.id === playerId && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">You</span>}
                                                 {p.id === initialRoomData?.hostId && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Host</span>}
                                             </div>
                                             <div className="mt-2 text-[11px] sm:text-xs font-bold grid grid-cols-2 gap-y-1">

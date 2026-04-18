@@ -14,13 +14,16 @@
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'  // 全局样式：Tailwind CSS + 自定义class
 import App from './App.jsx'  // 核心应用路由器组件
 
 // 创建React根对象并渲染
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* App是全局路由器，负责管理所有页面状态切换 */}
-    <App />
+    <BrowserRouter>
+      {/* App是全局路由器，负责管理所有页面状态切换 */}
+      <App />
+    </BrowserRouter>
   </StrictMode>,
 )

@@ -64,7 +64,7 @@ class TreasureHunt {
         //   - configuredBy: 记录是谁(哪个玩家)为这个玩家配置的
         const gamePlayers = players.map((p, index) => {
             return {
-                id: p.socketId,
+                id: p.playerId,
                 name: p.name,
                 color: COLORS[index % COLORS.length],
                 startPos: null,        // 待配置
@@ -357,7 +357,10 @@ class TreasureHunt {
 
         // 找出执行者在玩家列表中的索引
         const executorIdx = gameState.players.findIndex(p => p.id === socketId);
-        if (executorIdx === -1) return { error: "你不在游戏中！" };
+        if (executorIdx === -1) {
+            console.error(`[TreasureHunt] Player ID mismatch: ${socketId} not in ${JSON.stringify(gameState.players.map(p => p.id))}`);
+            return { error: "你不在游戏中！" };
+        }
 
         // 计算下一个玩家的索引(被配置者)
         const targetIdx = (executorIdx + 1) % gameState.players.length;

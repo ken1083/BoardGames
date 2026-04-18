@@ -1,0 +1,20 @@
+{
+    "id": "battle_line",
+    "name_ch": "战线",
+    "name_en": "Battle Line",
+    "icon": "⚔️",
+    "description": "2人回合制卡牌策略游戏",
+    "version": "1.0.0",
+    "author": "Ken",
+    "gamePlay": {
+        "maxPlayers": 2,
+        "minPlayers": 2,
+        "isTeamBased": false
+    },
+    "tags": [
+        "strategy",
+        "card-game",
+        "turn-based",
+        "competitive"
+    ]
+}

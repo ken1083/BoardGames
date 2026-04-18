@@ -1,6 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { createRequire } from 'module'
+
+const req = createRequire(import.meta.url)
+function pkgDir(pkgPath) {
+  try {
+    return path.dirname(req.resolve(`${pkgPath}/package.json`))
+  } catch (e) {
+    return path.resolve(__dirname, `node_modules/${pkgPath}`)
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -26,13 +36,12 @@ export default defineConfig({
       '@core': path.resolve(__dirname, './src/core'),
       '@shared': path.resolve(__dirname, '../../shared'),
       '@games': path.resolve(__dirname, '../../games'),
-      // ====== 核心修复：依赖劫持 ======
       // 由于游戏代码位于平台目录之外，且没有独立的 node_modules，
       // 我们强制所有游戏引用平台本地的 react 和其他核心库，以实现"无配置即玩"
-      'react': path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
-      'lucide-react': path.resolve(__dirname, 'node_modules/lucide-react'),
+      'react': pkgDir('react'),
+      'react-dom': pkgDir('react-dom'),
+      'react/jsx-runtime': req.resolve('react/jsx-runtime'),
+      'lucide-react': pkgDir('lucide-react'),
     },
   },
 })

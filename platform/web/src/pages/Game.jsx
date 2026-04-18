@@ -17,7 +17,8 @@
  */
 
 import { Suspense, lazy } from 'react';
-import { getGameRegistry } from '@shared/game-registry';
+import { getGameRegistry, getEnabledGames } from '@shared/game-registry';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 const LoadingScreen = () => (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100">
@@ -43,10 +44,26 @@ const ErrorScreen = ({ onBackToLobby }) => (
     </div>
 );
 
-export default function Game({ gameDef, initialRoomData, initialGameState, onBackToLobby, onBackToRoom }) {
+export default function Game() {
+    const { gameId, roomId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const gameDef = getEnabledGames().find(g => g.id === gameId);
+
+    // Initial state injected from Room.jsx navigation
+    const initialGameState = location.state?.gameState;
+    const initialRoomData = location.state?.room;
+
     // 1. 验证游戏定义是否存在
     if (!gameDef) {
-        return <ErrorScreen onBackToLobby={onBackToLobby} />;
+        return <ErrorScreen onBackToLobby={() => navigate('/')} />;
+    }
+
+    // 如果状态丢失（刷新页面），跳转回房间大厅重新获取
+    if (!initialGameState) {
+        navigate(`/${gameId}/${roomId}`);
+        return null;
     }
 
     // 2. 从注册表获取游戏配置
@@ -66,8 +83,8 @@ export default function Game({ gameDef, initialRoomData, initialGameState, onBac
                 gameDef={gameDef}
                 initialRoomData={initialRoomData}
                 initialGameState={initialGameState}
-                onBackToLobby={onBackToLobby}
-                onBackToRoom={onBackToRoom}
+                onBackToLobby={() => navigate('/')}
+                onBackToRoom={() => navigate(`/${gameId}/${roomId}`)}
             />
         </Suspense>
     );
