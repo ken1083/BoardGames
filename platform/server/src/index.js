@@ -52,10 +52,10 @@ const io = new Server(server, {
 const socketToRoom = new Map();
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// 【Socket.io 事件处理】主连接事件
-// ═══════════════════════════════════════════════════════════════════════════════════
-
-io.on('connection', (socket) => {
+ // 【Socket.io 事件处理】主连接事件
+ // ═══════════════════════════════════════════════════════════════════════════════════
+ 
+ io.on('connection', (socket) => {
     // 玩家客户端连接后的处理逻辑
 
     // ═════════════════════════════════════════════════════════════════════════════════
@@ -255,6 +255,27 @@ io.on('connection', (socket) => {
 
             // 强制所有客户端返回到房间页面，并携带最新的房间数据
             io.to(roomId).emit('FORCE_BACK_TO_ROOM', room);
+        }
+    });
+
+    /**
+     * PLAYER_REJOINED: 玩家点击 REJOIN GAME 重新进入棋盘
+     * 仅做系统广播公告
+     */
+    socket.on('PLAYER_REJOINED', () => {
+        const roomId = socketToRoom.get(socket.id);
+        if (!roomId) return;
+
+        const room = roomManager.getRoom(roomId);
+        if (!room) return;
+
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (player) {
+            io.to(roomId).emit('NEW_CHAT_MESSAGE', {
+                sender: '系统',
+                text: `${player.name} 已重新进入游戏`,
+                time: Date.now()
+            });
         }
     });
 

@@ -1,0 +1,483 @@
+{
+  "locations": [
+    {
+      "id": "airplane",
+      "name_en": "airplane",
+      "name_ch": "飞机",
+      "theme": "transport",
+      "roles": [
+        "机长",
+        "副驾驶",
+        "空乘人员",
+        "航空警察",
+        "机修工",
+        "头等舱乘客",
+        "经济舱乘客",
+        "乘客"
+      ]
+    },
+    {
+      "id": "amusement_park",
+      "name_en": "amusement park",
+      "name_ch": "游乐场",
+      "theme": "entertainment",
+      "roles": [
+        "游乐设施操作员",
+        "售票员",
+        "小吃摊主",
+        "保安",
+        "吉祥物扮演者",
+        "表演者",
+        "游客",
+        "走失的小孩"
+      ]
+    },
+    {
+      "id": "bank",
+      "name_en": "bank",
+      "name_ch": "银行",
+      "theme": "city",
+      "roles": [
+        "分行经理",
+        "保安",
+        "柜员",
+        "大客户",
+        "普通客户",
+        "抢劫犯",
+        "保洁员",
+        "运钞车司机"
+      ]
+    },
+    {
+      "id": "beach",
+      "name_en": "beach",
+      "name_ch": "海滩",
+      "theme": "nature",
+      "roles": [
+        "救生员",
+        "游客",
+        "冲浪者",
+        "冰淇淋摊主",
+        "潜水教练",
+        "沙滩排球员",
+        "摄影师",
+        "小偷"
+      ]
+    },
+    {
+      "id": "cathedral",
+      "name_en": "cathedral",
+      "name_ch": "大教堂",
+      "theme": "history",
+      "roles": [
+        "神父",
+        "唱诗班成员",
+        "乞丐",
+        "游客",
+        "清洁工",
+        "信徒",
+        "导游",
+        "告解者"
+      ]
+    },
+    {
+      "id": "circus_tent",
+      "name_en": "circus tent",
+      "name_ch": "马戏团帐篷",
+      "theme": "entertainment",
+      "roles": [
+        "小丑",
+        "驯兽师",
+        "杂技演员",
+        "魔术师",
+        "持票观众",
+        "团长",
+        "道具管理员",
+        "走钢丝表演者"
+      ]
+    },
+    {
+      "id": "corporate_party",
+      "name_en": "corporate party",
+      "name_ch": "公司年会",
+      "theme": "city",
+      "roles": [
+        "CEO",
+        "人力资源总监",
+        "实习生",
+        "行政助理",
+        "IT支持",
+        "财务总监",
+        "后勤人员",
+        "表演者"
+      ]
+    },
+    {
+      "id": "crusader_army",
+      "name": "十字军",
+      "theme": "history",
+      "roles": [
+        "骑士",
+        "侍从",
+        "射手",
+        "随军医生",
+        "步兵",
+        "战术家",
+        "战俘",
+        "尸体"
+      ]
+    },
+    {
+      "id": "casino",
+      "name_en": "casino",
+      "name_ch": "赌场",
+      "theme": "entertainment",
+      "roles": [
+        "荷官",
+        "赌客",
+        "保安",
+        "经理",
+        "调酒师",
+        "老千",
+        "歌手",
+        "输光的人"
+      ]
+    },
+    {
+      "id": "hospital",
+      "name_en": "hospital",
+      "name_ch": "医院",
+      "theme": "city",
+      "roles": [
+        "外科医生",
+        "护士",
+        "麻醉师",
+        "住院病人",
+        "探视者",
+        "实习医生",
+        "药剂师",
+        "急诊科医生"
+      ]
+    },
+    {
+      "id": "hotel",
+      "name_en": "hotel",
+      "name_ch": "酒店",
+      "theme": "city",
+      "roles": [
+        "前台接待",
+        "门童",
+        "经理",
+        "住客",
+        "客房服务",
+        "厨师",
+        "大堂经理",
+        "服务员"
+      ]
+    },
+    {
+      "id": "military_base",
+      "name_en": "military base",
+      "name_ch": "军事基地",
+      "theme": "military",
+      "roles": [
+        "上校",
+        "中士",
+        "新兵",
+        "雷达操作员",
+        "军医",
+        "间谍人员",
+        "后勤兵",
+        "狙击手"
+      ]
+    },
+    {
+      "id": "movie_studio",
+      "name_en": "movie studio",
+      "name_ch": "电影制片厂",
+      "theme": "entertainment",
+      "roles": [
+        "导演",
+        "主演",
+        "场记",
+        "化妆师",
+        "特技替身",
+        "摄影师",
+        "制片人",
+        "道具管理员"
+      ]
+    },
+    {
+      "id": "ocean_liner",
+      "name_en": "ocean liner",
+      "name_ch": "远洋客轮",
+      "theme": "transport",
+      "roles": [
+        "船长",
+        "厨师",
+        "驻唱歌手",
+        "钢琴师",
+        "富豪",
+        "服务员",
+        "乘客",
+        "调酒师"
+      ]
+    },
+    {
+      "id": "passenger_train",
+      "name_en": "passenger train",
+      "name_ch": "旅客列车",
+      "theme": "transport",
+      "roles": [
+        "列车长",
+        "售货员",
+        "商务座乘客",
+        "机械师",
+        "餐车厨师",
+        "硬座乘客",
+        "检票员",
+        "乘警"
+      ]
+    },
+    {
+      "id": "pirate_ship",
+      "name_en": "pirate ship",
+      "name_ch": "海盗船",
+      "theme": "history",
+      "roles": [
+        "船长",
+        "水手",
+        "瞭望员",
+        "大副",
+        "厨师",
+        "俘虏",
+        "枪炮长",
+        "医生"
+      ]
+    },
+    {
+      "id": "polar_station",
+      "name_en": "polar station",
+      "name_ch": "极地科考站",
+      "theme": "nature",
+      "roles": [
+        "地质学家",
+        "气象学家",
+        "站长",
+        "厨师",
+        "探险家",
+        "医生",
+        "无线电员",
+        "生物学家"
+      ]
+    },
+    {
+      "id": "police_station",
+      "name_en": "police station",
+      "name_ch": "警察局",
+      "theme": "city",
+      "roles": [
+        "局员",
+        "警长",
+        "法医",
+        "嫌疑人",
+        "受害者",
+        "律师",
+        "接警员",
+        "记者"
+      ]
+    },
+    {
+      "id": "restaurant",
+      "name_en": "restaurant",
+      "name_ch": "餐厅",
+      "theme": "city",
+      "roles": [
+        "主厨",
+        "服务生",
+        "顾客",
+        "洗碗工",
+        "店长",
+        "美食评论家",
+        "驻唱手",
+        "收银员"
+      ]
+    },
+    {
+      "id": "school",
+      "name_en": "school",
+      "name_ch": "学校",
+      "theme": "city",
+      "roles": [
+        "校长",
+        "老师",
+        "学生",
+        "校工",
+        "保安",
+        "校医",
+        "家长",
+        "图书管理员"
+      ]
+    },
+    {
+      "id": "service_station",
+      "name_en": "service station",
+      "name_ch": "加油站",
+      "theme": "transport",
+      "roles": [
+        "站长",
+        "收银员",
+        "维修工",
+        "长途司机",
+        "洗车工",
+        "过路乘客",
+        "保洁",
+        "加油工"
+      ]
+    },
+    {
+      "id": "space_station",
+      "name_en": "space station",
+      "name_ch": "空间站",
+      "theme": "sci-fi",
+      "roles": [
+        "指挥员",
+        "生物学家",
+        "宇航员",
+        "机械工程师",
+        "科学家",
+        "医生",
+        "地勤联络员",
+        "偷偷潜入的外星人"
+      ]
+    },
+    {
+      "id": "submarine",
+      "name_en": "submarine",
+      "name_ch": "潜艇",
+      "theme": "military",
+      "roles": [
+        "舰长",
+        "声呐员",
+        "鱼雷长",
+        "机械师",
+        "轮机兵",
+        "炊事员",
+        "政委",
+        "潜水员"
+      ]
+    },
+    {
+      "id": "supermarket",
+      "name_en": "supermarket",
+      "name_ch": "超市",
+      "theme": "city",
+      "roles": [
+        "收银员",
+        "收货员",
+        "经理",
+        "顾客",
+        "保安",
+        "理货员",
+        "推销员",
+        "屠夫"
+      ]
+    },
+    {
+      "id": "theater",
+      "name_en": "theater",
+      "name_ch": "剧院",
+      "theme": "entertainment",
+      "roles": [
+        "主演",
+        "导演",
+        "检票员",
+        "观众",
+        "后台场记",
+        "灯光师",
+        "售票员",
+        "化妆师"
+      ]
+    },
+    {
+      "id": "university",
+      "name_en": "university",
+      "name_ch": "大学",
+      "theme": "city",
+      "roles": [
+        "教授",
+        "讲师",
+        "研究生",
+        "留学生",
+        "系主任",
+        "管理员",
+        "辅导员",
+        "清洁工"
+      ]
+    },
+    {
+      "id": "world_war_ii_squad",
+      "name_en": "world war ii squad",
+      "name_ch": "二战突击队",
+      "theme": "history",
+      "roles": [
+        "队长",
+        "狙击手",
+        "机截手",
+        "医护兵",
+        "爆破专家",
+        "通讯兵",
+        "向导",
+        "投降的士兵"
+      ]
+    },
+    {
+      "id": "spa",
+      "name_en": "spa",
+      "name_ch": "水疗中心",
+      "theme": "city",
+      "roles": [
+        "技师",
+        "美容师",
+        "前台",
+        "更衣室管理员",
+        "顾客",
+        "健身教练",
+        "经理",
+        "按摩师"
+      ]
+    },
+    {
+      "id": "embassy",
+      "name_en": "embassy",
+      "name_ch": "大使馆",
+      "theme": "city",
+      "roles": [
+        "大使",
+        "秘书",
+        "武官",
+        "签证官",
+        "安保主管",
+        "翻译",
+        "访问者",
+        "清洁工"
+      ]
+    },
+    {
+      "id": "stadium",
+      "name_en": "stadium",
+      "name_ch": "体育场",
+      "theme": "entertainment",
+      "roles": [
+        "球星",
+        "教练",
+        "裁判",
+        "解说员",
+        "摄影师",
+        "观众",
+        "保安",
+        "医疗人员"
+      ]
+    }
+  ]
+}

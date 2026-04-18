@@ -4,10 +4,7 @@
 
 # 🟠 High Priority - Essential Gameplay
 
-1. **Multi-winner deadlock logic unclear** - 对于胜利条件2（死锁情况）：若多位玩家到其藏宝点的剩余格子数一样且是最少（即multi winners），目前的代码实现是怎样？实际应该要怎么判断（多位赢家？看谁先行动？还是其他？）
-   - Need to clarify: multiple winners, first to act, or other logic?
-
-2. **message gone after rejoining game** - 玩家在游戏中退出lobby并rejoin game之后，chatbox的messages会消失。
+***Currently no issue***
 
 ---
 
@@ -16,11 +13,14 @@
 1. **Distinguish obstacles by player** - 游戏分成2种模式：
     - 不区分障碍（current mode）（default）：统一障碍物的颜色，你不知道障碍物是哪个玩家放的（除非你看公告/记下来了）
     - 区分障碍：会以玩家颜色渲染障碍物，你可以知道障碍物是哪个玩家放的
-   - Optional game mode variant
+    - change setting by host in room (with a brief of the modes)
+    - in game, there will be a mode name under/beside the game's name in the top nav
 
-2. **Game Rules viewing** - 目前，游戏规则只在GameMenu里显示，若是在游戏进行中想要查看规则需要退出到GameMenu再查看，体验感不佳。建议在InGame UI增加游戏规则的按钮，点击后可以显示游戏规则。
+2. **Game Rules viewing** - 目前，游戏规则只在GameMenu里显示，若是在游戏进行中想要查看规则需要退出到GameMenu再查看，体验感不佳。建议在InGame UI增加游戏规则的按钮，点击后可以显示游戏规则。(maybe can do a toggle view button between rule&chatbox, but this means chatbox should be put at the most right of the page instead of under player intel)
 
 3. **Multiple session handling** - 若玩家同时加入多个房间/游戏（same tab，join other room/game aftfer soft leave），需要怎么处理？
+
+4. **Room password option** - 让房主在创建房间的时候，选择是否需要密码加入房间。If yes, 则在创建之前设置密码。其他玩家加入房间的时候需要输入密码。
 
 ---
 
@@ -32,9 +32,7 @@
 2. **SPA state persistence** - 目前的设计是Single Page Application (SPA)，refresh就会丢失状态。
    - Could add localStorage or session storage
 
-3. **Small screen optimization** - 对于屏幕高度较小的设备，treasure-hunt in game 可能过长（chatbox的底部需要scroll down才能看到）。优先级不高，可是可以找一天进行优化。
-   - Can optimize later if needed
-
+---
 
 # Solved Issues
 
@@ -73,3 +71,7 @@
 15. **Lack of Grid Coordinates** - Players struggle to quickly find cells mentioned in announcements (like (4, 5)) because there are no row/column labels (1-9) on the board's edge.
 
 16. **Restart Game Button** - 目前，游戏内只有终止游戏按钮。玩家结束一局游戏后需要点击“终止游戏”回到房间再重新start game。可以增加一个“重开一局”的按钮在“终止游戏”旁边（only host can see and use）。
+
+17. **Multi-winner deadlock logic unclear** - 对于胜利条件2（死锁情况）：若多位玩家到其藏宝点的剩余格子数一样且是最少，则在多位剩余格子最少的玩家中，从当前玩家开始顺延，谁先行动谁获胜。
+
+18. **message gone after rejoining game** - 玩家在游戏中退出lobby并rejoin game之后，chatbox的messages会消失。

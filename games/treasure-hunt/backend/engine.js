@@ -245,8 +245,8 @@ class TreasureHunt {
     // ═══════════════════════════════════════════════════════════════════════════════════
     isGameDeadlocked(gameState) {
         // 遍历棋盘的所有空白格子
-        for (let r = 0; r < SIZE; r++) {
-            for (let c = 0; c < SIZE; c++) {
+        for (let r = 1; r < SIZE - 1; r++) {
+            for (let c = 1; c < SIZE - 1; c++) {
                 // 只检查空白格子，由于不能把障碍放在玩家头上，玩家占用的格子不纳入判定
                 if (gameState.board[r][c] === '') {
                     const isOccupied = gameState.players.some(p => p.currentPos && p.currentPos.r === r && p.currentPos.c === c);
@@ -287,21 +287,28 @@ class TreasureHunt {
         // 【胜利条件2】检查是否游戏进入死锁状态
         if (this.isGameDeadlocked(gameState)) {
             // 游戏已死锁，计算每个玩家到宝藏点的最短路径长度
-            let minDistance = Infinity;
-            let winner = null;
+            const distances = gameState.players.map(p => ({
+                player: p,
+                dist: this.getShortestPathLength(gameState.board, p.currentPos, p.targetPos)
+            }));
 
-            for (let p of gameState.players) {
-                const distance = this.getShortestPathLength(gameState.board, p.currentPos, p.targetPos);
+            // 1. 找到最小距离
+            const minDistance = Math.min(...distances.map(d => d.dist));
 
-                // 找到距离最短的玩家
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    winner = p;
+            // 2. 使用回合顺序进行决胜 (Tie-breaker)
+            // 从当前玩家 (turnIndex) 开始查，第一个拥有最短路径的人胜出
+            const playersCount = gameState.players.length;
+            const startIndex = gameState.turnIndex || 0;
+
+            for (let i = 0; i < playersCount; i++) {
+                const checkIdx = (startIndex + i) % playersCount;
+                const pDist = distances[checkIdx];
+
+                if (pDist.dist === minDistance) {
+                    // 找到死锁清算下的唯一赢家
+                    return pDist.player;
                 }
             }
-
-            // 返回死锁清算后的胜利者
-            return winner;
         }
 
         // 没有胜利者
@@ -383,7 +390,8 @@ class TreasureHunt {
 
             // 【预选】仅更新预选状态，不保存
             gameState.setupTempSelection[socketId] = { r, c };
-            gameState.message = `⏳ ${executor.name} 正在决定 ${targetPlayer.name} 的藏宝点。`;
+            // gameState.message = `⏳ ${executor.name} 正在决定 ${targetPlayer.name} 的藏宝点。`;
+            gameState.message = '';
             return { success: true };
         }
 
@@ -403,7 +411,8 @@ class TreasureHunt {
 
             // 【预选】仅更新预选状态，不保存
             gameState.setupTempSelection[socketId] = { r, c };
-            gameState.message = `⏳ ${executor.name} 正在决定 ${targetPlayer.name} 的出发点。`;
+            // gameState.message = `⏳ ${executor.name} 正在决定 ${targetPlayer.name} 的出发点。`;
+            gameState.message = '';
             return { success: true };
         }
 

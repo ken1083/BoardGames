@@ -290,7 +290,18 @@ export default function GameMenu({ gameDef, activeRoomData, onJoined, onBack }) 
                                     <p className="font-bold text-neutral-800 text-base mb-1.5">{step.title}</p>
 
                                     {/* 步骤详细描述 */}
-                                    <p>{step.body}</p>
+                                    {/* <p className="whitespace-pre-line">{step.body}</p> */}
+                                    <div className="space-y-2">
+                                        <p>{step.body}</p>
+
+                                        {step.list && (
+                                            <ol className="list-decimal list-inside ml-2 space-y-1">
+                                                {step.list.map((item, i) => (
+                                                    <li key={i}>{item}</li>
+                                                ))}
+                                            </ol>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}

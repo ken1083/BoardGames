@@ -348,7 +348,10 @@ export default function Room({ gameDef, initialRoomData, onGameReady, onBackToLo
                             <div className="pt-4 border-t border-neutral-100">
                                 {room.status === 'playing' ? (
                                     <button
-                                        onClick={() => onGameReady(room.gameState)}
+                                        onClick={() => {
+                                            socket.emit('PLAYER_REJOINED');
+                                            onGameReady(room.gameState);
+                                        }}
                                         className="w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 animate-pulse"
                                     >
                                         <Play size={20} className="fill-white" />

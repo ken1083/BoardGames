@@ -373,7 +373,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                     <div className="w-full max-w-[700px] text-center mb-4 min-h-[40px] flex items-center justify-center">
                         {gameState.winner ? (
                             <div className="inline-block bg-yellow-400 text-yellow-900 px-8 py-3 rounded-2xl font-black text-xl shadow-lg">
-                                👑 {currentPlayer?.name} 登峰！ 👑
+                                👑 {gameState.winner} 成为了海贼王！ 👑
                             </div>
                         ) : isSetupPhase ? (
                             <div className="text-sm font-bold text-neutral-500 bg-white px-6 py-2 rounded-xl shadow-sm border border-neutral-100">
@@ -383,8 +383,8 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
                                     const targetName = targetPlayer ? targetPlayer.name : '未知玩家';
 
                                     const myConfig = (gameState.playerConfigCount && gameState.playerConfigCount[socket.id]) ?? 0;
-                                    if (myConfig === 0) return `👉 请点击棋盘上的字母格预选 ${targetName} 【藏宝点】`;
-                                    if (myConfig === 1) return `👉 请点击另一个字母格预选 ${targetName} 【出发点】`;
+                                    if (myConfig === 0) return `👉 请点击棋盘上的字母格预选 ${targetName} 的藏宝点`;
+                                    if (myConfig === 1) return `👉 请点击另一个字母格预选 ${targetName} 的出发点`;
                                     return "等待其他玩家完成配置...";
                                 })()}
                             </div>
