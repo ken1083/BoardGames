@@ -22,7 +22,7 @@ export const GAME_REGISTRY = [
     },
     {
         ...battleLineSpec,
-        enabled: true,
+        enabled: false,
         rules: battleLineRules
     }
 ];

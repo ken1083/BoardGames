@@ -1,6 +1,6 @@
 # 🔴 Critical Priority - Fix Immediately
 
-1. 当玩家在游戏内刷新页面，出现的页面是游戏初始状态，而不是当前游戏的状态。 此时，该玩家的一切操作都没有反应，除了back to lobby。若该玩家回到gameMenu之后再重新加入游戏，则会顺利回到当前游戏的状态。（整个过程中，其他玩家都一切正常）。
+***Currently no issue***
 
 ---
 
@@ -76,3 +76,5 @@
 19. **Multiple session handling** - 若玩家同时加入多个房间，则对于同一个游戏，加入另一个房间的同时会从active room离开。每位玩家每个游戏最多有一个active房间。
 
 20. **SPA state persistence** - 目前的设计是Single Page Application (SPA)，refresh就会丢失状态。
+
+21. **Refresh during game** - 当玩家在游戏内刷新页面，出现的页面是游戏过去的状态，而不是当前游戏的状态。 此时，该玩家的一切操作都没有反应，除了back to lobby。若该玩家回到gameMenu之后再重新加入游戏，则会顺利回到当前游戏的状态。（整个过程中，其他玩家都一切正常）。
