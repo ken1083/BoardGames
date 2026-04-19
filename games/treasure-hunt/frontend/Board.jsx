@@ -139,6 +139,9 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
         socket.on('NEW_CHAT_MESSAGE', handleChat);
         socket.on('FORCE_BACK_TO_ROOM', handleForceBack);
 
+        if (!socket.connected) socket.connect();
+        socket.emit('REJOIN_ROOM', { roomId: roomId?.trim().toUpperCase() });
+
         // cleanup函数：组件卸载时移除监听，防止内存泄漏
         return () => {
             socket.off('GAME_STATE_UPDATED', handleUpdate);
@@ -147,7 +150,7 @@ export default function TreasureHuntBoard({ gameDef, initialRoomData, initialGam
             socket.off('NEW_CHAT_MESSAGE', handleChat);
             socket.off('FORCE_BACK_TO_ROOM', handleForceBack);
         };
-    }, [onBackToLobby]);
+    }, [roomId, onBackToLobby, onBackToRoom]);
 
     /**
      * 将服务器的系统消息注入到聊天室中

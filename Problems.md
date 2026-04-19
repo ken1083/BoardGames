@@ -1,6 +1,8 @@
 # 🔴 Critical Priority - Fix Immediately
 
-***Currently no issue***
+1. 当玩家在游戏内刷新页面，出现的页面是游戏初始状态，而不是当前游戏的状态。 此时，该玩家的一切操作都没有反应，除了back to lobby。若该玩家回到gameMenu之后再重新加入游戏，则会顺利回到当前游戏的状态。（整个过程中，其他玩家都一切正常）。
+
+---
 
 # 🟠 High Priority - Essential Gameplay
 
@@ -10,7 +12,7 @@
 
 # 🟡 Medium Priority - Feature Enhancements
 
-1. **Distinguish obstacles by player** - 游戏分成2种模式：
+1. **Distinguish obstacles by player** - treasure-hunt游戏分成2种模式：
     - 不区分障碍（current mode）（default）：统一障碍物的颜色，你不知道障碍物是哪个玩家放的（除非你看公告/记下来了）
     - 区分障碍：会以玩家颜色渲染障碍物，你可以知道障碍物是哪个玩家放的
     - change setting by host in room (with a brief of the modes)
@@ -18,9 +20,7 @@
 
 2. **Game Rules viewing** - 目前，游戏规则只在GameMenu里显示，若是在游戏进行中想要查看规则需要退出到GameMenu再查看，体验感不佳。建议在InGame UI增加游戏规则的按钮，点击后可以显示游戏规则。(maybe can do a toggle view button between rule&chatbox, but this means chatbox should be put at the most right of the page instead of under player intel)
 
-3. **Multiple session handling** - 若玩家同时加入多个房间/游戏（same tab，join other room/game aftfer soft leave），需要怎么处理？
-
-4. **Room password option** - 让房主在创建房间的时候，选择是否需要密码加入房间。If yes, 则在创建之前设置密码。其他玩家加入房间的时候需要输入密码。
+3. **Room password option** - 让房主在创建房间的时候，选择是否需要密码加入房间。If yes, 则在创建之前设置密码。其他玩家加入房间的时候需要输入密码。
 
 ---
 
@@ -28,9 +28,6 @@
 
 1. **Mobile/responsive design** - 前端页面的设计完全没有考虑过移动设备（如电话），需要重新设计
    - Future redesign when mobile support needed
-
-2. **SPA state persistence** - 目前的设计是Single Page Application (SPA)，refresh就会丢失状态。
-   - Could add localStorage or session storage
 
 ---
 
@@ -75,3 +72,7 @@
 17. **Multi-winner deadlock logic unclear** - 对于胜利条件2（死锁情况）：若多位玩家到其藏宝点的剩余格子数一样且是最少，则在多位剩余格子最少的玩家中，从当前玩家开始顺延，谁先行动谁获胜。
 
 18. **message gone after rejoining game** - 玩家在游戏中退出lobby并rejoin game之后，chatbox的messages会消失。
+
+19. **Multiple session handling** - 若玩家同时加入多个房间，则对于同一个游戏，加入另一个房间的同时会从active room离开。每位玩家每个游戏最多有一个active房间。
+
+20. **SPA state persistence** - 目前的设计是Single Page Application (SPA)，refresh就会丢失状态。

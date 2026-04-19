@@ -16,9 +16,10 @@
  * - ErrorBoundary：捕获加载失败的错误
  */
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { getGameRegistry, getEnabledGames } from '@shared/game-registry';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { socket } from '../core/services/socket';
 
 const LoadingScreen = () => (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100">

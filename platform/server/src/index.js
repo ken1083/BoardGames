@@ -110,7 +110,7 @@ io.on('connection', (socket) => {
             socket.emit('ROOM_UPDATED', room);
             // 这里也可以发送 GAME_STARTED 如果状态是 playing
             if (room.status === 'playing') {
-                io.to(room.id).emit('GAME_STARTED', {
+                socket.emit('GAME_STARTED', {
                     room,
                     gameState: room.gameState,
                     roomId: room.id
